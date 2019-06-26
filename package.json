@@ -1,0 +1,28 @@
+{
+  "name": "rpct",
+  "version": "0.0.1",
+  "description": "rpc toolkit",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rpc",
+    "toolkit",
+    "network",
+    "remote",
+    "call"
+  ],
+  "author": "morglod",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.5.1"
+  },
+  "dependencies": {
+    "@types/node": "^12.0.7",
+    "@types/socket.io-client": "^1.4.32",
+    "tsargs": "^1.3.3",
+    "tsee": "^1.2.1"
+  }
+}
