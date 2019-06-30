@@ -88,7 +88,7 @@ export class Api<
                 if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: callback at ${argI} arg index, returning proxy`);
                 return (...callbackArgs: any[]) => {
                     if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: proxy call for ${argI} arg index, callbackArgs="${JSON.stringify(callbackArgs)}", callback="${arg.callback}"`);
-                    return this.call({
+                    return this._call({
                         callback: arg.callback,
                         args: callbackArgs,
                     });
@@ -101,7 +101,7 @@ export class Api<
         return func(...args);
     }
 
-    call = async (params: {
+    _call = async (params: {
         method?: string,
         callback?: string,
         args: any[]
@@ -129,7 +129,10 @@ export class Api<
     callMethod = <Method extends keyof RemoteMethodMap>(
         method: Method,
         ...args: tsargs.ArgsN<RemoteMethodMap[Method]>
-    ): ReturnType<_AsyncApiDefintion<RemoteMethodMap>[Method]> => this.call({ method: method as any, args }) as any;
+    ): ReturnType<_AsyncApiDefintion<RemoteMethodMap>[Method]> => this._call({ method: method as any, args }) as any;
+
+    // TODO: call without callback mechanism, for speedup
+    // callNoCallback;
 
     readonly definition: ApiDefinition<RemoteMethodMap, SelfMethodMap>;
     readonly transport: ITransport;

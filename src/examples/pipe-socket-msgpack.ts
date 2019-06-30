@@ -4,7 +4,6 @@ import * as path from 'path';
 import { Api } from "../api";
 import { StreamTransport } from "../stream.transport";
 import { messagePackTransforms } from './message-pack-transform';
-import { DefaultConfig } from '../config';
 
 const SOCKET_PATH = path.join('\\\\?\\pipe', process.cwd(), 'myctl');
 
