@@ -1,30 +1,32 @@
 import { Api } from "../api";
-import { StreamIOTransport } from "../stream.transport";
-import { DefaultConfig } from "../config";
+import { DuplexStreamTransport } from "../duplex-stream.transport";
 import { simpleCrossStream } from "../streams";
+import { ITransportProtocol } from "../transport";
 
-function remoteSum(a: number, b: number, cb: (result: number) => void) {
-    console.log(`remoteSum(${a}, ${b}, cb)`);
-    cb(a + b);
+function remoteSum(a: number, b: number, sumCallback: (result: number) => void, mulCallback: (result: number) => void) {
+    console.log(`remoteSum(${a}, ${b})`);
+    sumCallback(a + b);
+    mulCallback(a * b);
 }
 
 (async function main() {
-    // DefaultConfig.debug = true;
-    DefaultConfig.uuidGeneratorFactory = () => () => `${Math.floor(Math.random()*999).toString(16)}-${Math.floor(Math.random()*999).toString(16)}-${Math.floor(Math.random()*999).toString(16)}-${Math.floor(Math.random()*999).toString(16)}`;
+    const session = simpleCrossStream<ITransportProtocol>();
 
-    const session = simpleCrossStream();
-
-    const localStreamTransport = new StreamIOTransport(session as any, undefined, 'local');
+    const localStreamTransport = new DuplexStreamTransport(session, undefined, 'local');
     const localApi = new Api<{ remoteSum: typeof remoteSum }, {}>({}, localStreamTransport);
 
-    const remoteStreamTransport = new StreamIOTransport(session as any, undefined, 'remote');
+    const remoteStreamTransport = new DuplexStreamTransport(session, undefined, 'remote');
     const remoteApi = new Api<{}, { remoteSum: typeof remoteSum }>({
         selfMethods: {
             remoteSum,
         }
     }, remoteStreamTransport);
 
-    localApi.callMethod('remoteSum', 10, 20, result => {
-        console.log('answer:', result);
-    });
+    localApi.callMethod(
+        'remoteSum',    // Remote api method
+        10,             // argument `a`
+        20,             // argument `b`
+        sumResult => console.log('sum:', sumResult),    // argument `sumCallback`
+        mulResult => console.log('mul:', mulResult)     // argument `mulCallback`
+    );
 })();

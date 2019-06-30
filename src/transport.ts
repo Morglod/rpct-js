@@ -30,7 +30,7 @@ export interface ITransportMaster extends ITransportConfigurable {
 }
 
 export interface ITransportSlave extends ITransportConfigurable {
-    /** handle request from remote connected master */
+    /** handle request from remote connected master with request handler */
     setRequestHandler(handler: ITransportRequestHandler): void;
     getRequestHandler(): ITransportRequestHandler;
 }

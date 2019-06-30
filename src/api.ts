@@ -1,8 +1,17 @@
 import { Config, DefaultConfig } from './config';
 import { ITransport, ITransportRequestHandler, PodJSON } from './transport';
 import * as tsargs from 'tsargs';
+import { UUIDGenerator } from './utils';
+import { ArgsN } from 'tsargs';
 
 export type DefaultMethodMap = { [methodName: string]: (...args: any[]) => any };
+type _AsyncApiDefintion<MethodMap extends DefaultMethodMap> = {
+    [f in keyof MethodMap]: (...args: ArgsN<MethodMap[f]>) =>
+        // if return type is void, return void
+        ReturnType<MethodMap[f]> extends (void|undefined) ? void
+            // otherwise wrap it to promise
+            : ReturnType<MethodMap[f]> extends Promise<any> ? ReturnType<MethodMap[f]> : Promise<ReturnType<MethodMap[f]>>
+}
 
 export type ApiDefinition<
     RemoteMethodMap extends DefaultMethodMap,
@@ -11,7 +20,7 @@ export type ApiDefinition<
     // version: string,
     // minVersion?: string[],
     // ignoreRemoteCall?: boolean|'disconnect'|'ban ip',
-    selfMethods?: SelfMethodMap,
+    selfMethods?: _AsyncApiDefintion<SelfMethodMap>,
 };
 
 export type ApiProtocolArg = {
@@ -33,7 +42,9 @@ export class Api<
         definition: ApiDefinition<RemoteMethodMap, SelfMethodMap>,
         transport: ITransport,
         config: Config = DefaultConfig,
+        public debugName = '',
     ) {
+        this.nextUUID = config.uuidGeneratorFactory();
         this.definition = definition;
         this.transport = transport;
         this.config = config;
@@ -41,7 +52,10 @@ export class Api<
         transport.setRequestHandler(this.handleRemoteCall);
     }
 
-    private handleRemoteCall: ITransportRequestHandler = async (v) => {
+    private handleRemoteCall: ITransportRequestHandler = (v) => {
+        if (this.config.debug) {
+            console.log(`Api_${this.debugName} handleRemoteCall: "${JSON.stringify(v)}"`);
+        }
         const data = v as ApiProtocol;
         let func: Function;
 
@@ -53,21 +67,27 @@ export class Api<
                 console.error(`method '${data.method}' not found`);
                 return;
             }
+            if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found selfMethod data.method="${data.method}"`);
             func = this.definition.selfMethods[data.method];
         } else if (data.callback) {
+            if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: it has a callback call request data.callback="${data.callback}"`);
             if (!this.callbacks[data.callback]) {
                 console.error(`callback '${data.method}' not found`);
                 return;
             }
+            if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found callback="${data.callback}"`);
             func = this.callbacks[data.callback];
         } else {
             console.error('not method & not callback');
             return;
         }
 
-        const args = data.args.map(arg => {
+        if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: processing data.args`);
+        const args = data.args.map((arg, argI) => {
             if (arg.callback) {
+                if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: callback at ${argI} arg index, returning proxy`);
                 return (...callbackArgs: any[]) => {
+                    if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: proxy call for ${argI} arg index, callbackArgs="${JSON.stringify(callbackArgs)}", callback="${arg.callback}"`);
                     return this.call({
                         callback: arg.callback,
                         args: callbackArgs,
@@ -77,32 +97,36 @@ export class Api<
             return arg.value;
         });
 
-        if (this.config.debug) console.log('calling func');
+        if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: invoking func`);
         return func(...args);
     }
 
-    call = async (params: {
+    call = (params: {
         method?: string,
         callback?: string,
         args: any[]
     }) => {
+        if (this.config.debug) console.log(`Api_${this.debugName} call: params="${JSON.stringify(params)}"`);
+        
         const apiProtocol: ApiProtocol = {
             method: params.method,
             callback: params.callback,
-            args: params.args.map(arg => {
+            args: params.args.map((arg, argI) => {
                 if (typeof arg === 'function') {
-                    const callbackUUID = `${++this.uuid}`;
+                    const callbackUUID = `${this.nextUUID()}`;
                     this.callbacks[callbackUUID] = arg;
+                    if (this.config.debug) console.log(`Api_${this.debugName} call: found func arg at ${argI} index, bound a callback as callbackUUID="${callbackUUID}"`);
                     return { callback: callbackUUID };
                 }
                 return { value: arg };
             }),
         };
 
+        if (this.config.debug) console.log(`Api_${this.debugName} call: sending request to transport`);
         return this.transport.request<ApiProtocol>(apiProtocol);
     }
 
-    callMethod = async <Method extends keyof RemoteMethodMap>(
+    callMethod = <Method extends keyof RemoteMethodMap>(
         method: Method,
         ...args: tsargs.ArgsN<RemoteMethodMap[Method]>
     ) => this.call({ method: method as any, args });
@@ -112,5 +136,6 @@ export class Api<
     readonly config: Config;
 
     private readonly callbacks: { [uuid: string]: Function } = {};
-    private uuid: number = 0;
+
+    nextUUID: UUIDGenerator;
 }
