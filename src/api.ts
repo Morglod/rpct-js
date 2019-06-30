@@ -101,7 +101,7 @@ export class Api<
         return func(...args);
     }
 
-    call = (params: {
+    call = async (params: {
         method?: string,
         callback?: string,
         args: any[]
@@ -129,7 +129,7 @@ export class Api<
     callMethod = <Method extends keyof RemoteMethodMap>(
         method: Method,
         ...args: tsargs.ArgsN<RemoteMethodMap[Method]>
-    ) => this.call({ method: method as any, args });
+    ): ReturnType<_AsyncApiDefintion<RemoteMethodMap>[Method]> => this.call({ method: method as any, args }) as any;
 
     readonly definition: ApiDefinition<RemoteMethodMap, SelfMethodMap>;
     readonly transport: ITransport;

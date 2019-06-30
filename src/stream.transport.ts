@@ -52,7 +52,7 @@ export class StreamTransport implements ITransport {
 
         const { answer } = this.pending.ask(req.uuid);
         this.wstream.write(req);
-        return answer;
+        return answer.then(x => x.data);
     }
 
     setRequestHandler(handler: ITransportRequestHandler): void {
