@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <script src="./rpct.min.js"></script>
+        <script>
+            RPCT.DefaultConfig.debug = true;
+
+            function remoteSum(a, b, sumCallback, mulCallback) {
+                console.log(`remoteSum(${a}, ${b})`);
+                sumCallback(a + b);
+                mulCallback(a * b);
+            }
+
+            var wstream = RPCT.createWindowWriteStream(window.parent);
+            var rstream = RPCT.createWindowReadStream(window).stream;
+            var streamTransport = new RPCT.StreamTransport(rstream, wstream, undefined, 'remote');
+            var remoteApi = new RPCT.Api({
+                selfMethods: {
+                    remoteSum,
+                }
+            }, streamTransport);
+        </script>
+    </body>
+</html>

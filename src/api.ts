@@ -77,6 +77,7 @@ export class Api<
             }
             if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found callback="${data.callback}"`);
             func = this.callbacks[data.callback];
+            delete this.callbacks[data.callback];
         } else {
             console.error('not method & not callback');
             return;
@@ -138,6 +139,7 @@ export class Api<
     readonly transport: ITransport;
     readonly config: Config;
 
+    /** temp storage for remote callbacks */
     private readonly callbacks: { [uuid: string]: Function } = {};
 
     nextUUID: UUIDGenerator;
