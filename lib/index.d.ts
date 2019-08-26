@@ -2,7 +2,6 @@ export * from './api';
 export * from './config';
 export * from './duplex-json-stream.transport';
 export * from './duplex-stream.transport';
-// export * from './socket.io.transport';
 export * from './stream.transport';
 export * from './streams';
 export * from './ticket-list';

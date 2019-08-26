@@ -1,0 +1,16 @@
+import { Config } from './config';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol } from './transport';
+import { TicketList } from './ticket-list';
+import { IStreamDuplex } from './streams';
+export declare class DuplexStreamTransport implements ITransport {
+    debugName: string;
+    constructor(stream: IStreamDuplex<ITransportProtocol, ITransportProtocol>, config?: Config, debugName?: string);
+    request(data: ITransportData): Promise<ITransportData>;
+    setRequestHandler(handler: ITransportRequestHandler): void;
+    getRequestHandler(): ITransportRequestHandler;
+    setConfig(config: Config): void;
+    private requestHandler;
+    readonly stream: IStreamDuplex<ITransportProtocol, ITransportProtocol>;
+    config: Readonly<Config>;
+    pending: TicketList<ITransportProtocol>;
+}

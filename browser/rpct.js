@@ -1,23 +1,5 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.RPCT = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
-Object.defineProperty(exports, "__esModule", { value: true });
-__export(require("./api"));
-__export(require("./config"));
-__export(require("./duplex-json-stream.transport"));
-__export(require("./duplex-stream.transport"));
-// export * from './socket.io.transport';
-__export(require("./stream.transport"));
-__export(require("./streams"));
-__export(require("./ticket-list"));
-__export(require("./utils"));
-__export(require("./window.stream"));
-__export(require("tsee"));
-
-},{"./api":2,"./config":3,"./duplex-json-stream.transport":4,"./duplex-stream.transport":5,"./stream.transport":6,"./streams":7,"./ticket-list":8,"./utils":9,"./window.stream":10,"tsee":40}],2:[function(require,module,exports){
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -164,7 +146,25 @@ var Api = /** @class */ (function () {
 }());
 exports.Api = Api;
 
-},{"./config":3}],3:[function(require,module,exports){
+},{"./config":3}],2:[function(require,module,exports){
+"use strict";
+function __export(m) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+__export(require("./api"));
+__export(require("./config"));
+__export(require("./duplex-json-stream.transport"));
+__export(require("./duplex-stream.transport"));
+// export * from './socket.io.transport';
+__export(require("./stream.transport"));
+__export(require("./streams"));
+__export(require("./ticket-list"));
+__export(require("./utils"));
+__export(require("./window.stream"));
+__export(require("tsee"));
+
+},{"./api":1,"./config":3,"./duplex-json-stream.transport":4,"./duplex-stream.transport":5,"./stream.transport":6,"./streams":7,"./ticket-list":8,"./utils":9,"./window.stream":10,"tsee":40}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
@@ -7056,5 +7056,5 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":43,"./lib/rng":44}]},{},[1])(1)
+},{"./lib/bytesToUuid":43,"./lib/rng":44}]},{},[2])(2)
 });
