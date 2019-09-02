@@ -1,7 +1,7 @@
 import { Config } from './config';
 import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol } from './transport';
 import { TicketList } from './ticket-list';
-import { IStreamDuplex } from './streams';
+import { IStreamDuplex } from './stream.types';
 export declare class DuplexStreamTransport implements ITransport {
     debugName: string;
     constructor(stream: IStreamDuplex<ITransportProtocol, ITransportProtocol>, config?: Config, debugName?: string);

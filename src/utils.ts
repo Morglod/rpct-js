@@ -1,4 +1,3 @@
-import { default as hyperid } from 'hyperid';
 import { TicketListUUID } from "./ticket-list";
 
 export function cloneJSON(x: any) {
@@ -8,7 +7,7 @@ export function cloneJSON(x: any) {
 export type UUIDGenerator = (() => TicketListUUID);
 export type UUIDGeneratorFactory = () => UUIDGenerator;
 
-export function simpleUUIDGenerator(): UUIDGenerator {
+export function simpleCountGenerator(): UUIDGenerator {
     let counter = 0;
 
     return () => {
@@ -20,8 +19,8 @@ export function simpleUUIDGenerator(): UUIDGenerator {
     };
 }
 
-export function hyperidUUIDGenerator(): UUIDGenerator {
-    const instance = hyperid({ fixedLength: true });
-
-    return () => instance();
+export function unsafeUUIDGenerator(): UUIDGenerator {
+    return () => {
+        return `${Date.now()}-${Math.floor(Math.random() * 9999).toString(16)}-${Math.floor(Math.random() * 9999).toString(16)}`;
+    };
 }

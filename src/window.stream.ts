@@ -1,4 +1,4 @@
-import { IStreamReadable, StreamReadableEvents, IStreamWritable, StreamWritableEvents } from "./streams";
+import { IStreamReadable, StreamReadableEvents, IStreamWritable, StreamWritableEvents } from "./stream.types";
 import * as tsee from 'tsee';
 import { ITransportProtocol } from "./transport";
 

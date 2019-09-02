@@ -1,4 +1,4 @@
-import { UUIDGeneratorFactory, hyperidUUIDGenerator } from "./utils";
+import { UUIDGeneratorFactory, unsafeUUIDGenerator } from "./utils";
 
 export type Config = {
     version: string,
@@ -9,5 +9,5 @@ export type Config = {
 export const DefaultConfig: Config = {
     version: '0.1.0',
     debug: false,
-    uuidGeneratorFactory: hyperidUUIDGenerator,
+    uuidGeneratorFactory: unsafeUUIDGenerator,
 };

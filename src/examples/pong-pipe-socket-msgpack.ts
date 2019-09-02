@@ -63,13 +63,11 @@ function server() {
 
         const remoteStreamTransport = new StreamTransport(readable, writable, undefined, 'remote');
         const remoteApi = new Api<{}, ApiDefinition>({
-            selfMethods: {
-                ping(pong) {
-                    pong(async (ping2) => {
-                        const r = ping2('hello');
-                        console.log(await r);
-                    })
-                }
+            ping(pong) {
+                pong(async (ping2) => {
+                    const r = ping2('hello');
+                    console.log(await r);
+                })
             }
         }, remoteStreamTransport, undefined, 'remote');
     

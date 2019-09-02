@@ -4,7 +4,7 @@ export * from './duplex-json-stream.transport';
 export * from './duplex-stream.transport';
 // export * from './socket.io.transport';
 export * from './stream.transport';
-export * from './streams';
+export * from './stream.types';
 export * from './ticket-list';
 export * from './transport';
 export * from './utils';

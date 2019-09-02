@@ -15,9 +15,7 @@
             var rstream = RPCT.createWindowReadStream(window).stream;
             var streamTransport = new RPCT.StreamTransport(rstream, wstream, undefined, 'remote');
             var remoteApi = new RPCT.Api({
-                selfMethods: {
-                    remoteSum,
-                }
+                remoteSum,
             }, streamTransport);
         </script>
     </body>

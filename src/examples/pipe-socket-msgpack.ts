@@ -73,15 +73,13 @@ function server() {
 
         const remoteStreamTransport = new StreamTransport(readable, writable, undefined, 'remote');
         const remoteApi = new Api<{}, ApiDefinition>({
-            selfMethods: {
-                async remoteSum(a: number, b: number, sum, mul, pow) {
-                    console.log(`remoteSum(${a}, ${b})`);
-                    const word1 = await sum(a + b);
-                    const word2 = await mul(a * b);
-                    const word3 = await pow(a ** b);
-                    return word1 + word2 + word3;
-                },
-            }
+            async remoteSum(a: number, b: number, sum, mul, pow) {
+                console.log(`remoteSum(${a}, ${b})`);
+                const word1 = await sum(a + b);
+                const word2 = await mul(a * b);
+                const word3 = await pow(a ** b);
+                return word1 + word2 + word3;
+            },
         }, remoteStreamTransport, undefined, 'remote');
     
     }).listen(SOCKET_PATH, () => {

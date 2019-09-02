@@ -2,15 +2,11 @@ import { Config } from './config';
 import { ITransport, PodJSON } from './transport';
 import * as tsargs from 'tsargs';
 import { UUIDGenerator } from './utils';
-import { ArgsN } from 'tsargs';
 export declare type DefaultMethodMap = {
     [methodName: string]: (...args: any[]) => any;
 };
-declare type _AsyncApiDefintion<MethodMap extends DefaultMethodMap> = {
-    [f in keyof MethodMap]: (...args: ArgsN<MethodMap[f]>) => ReturnType<MethodMap[f]> extends (void | undefined) ? void : ReturnType<MethodMap[f]> extends Promise<any> ? ReturnType<MethodMap[f]> : Promise<ReturnType<MethodMap[f]>>;
-};
-export declare type ApiDefinition<RemoteMethodMap extends DefaultMethodMap, SelfMethodMap extends DefaultMethodMap> = {
-    selfMethods?: _AsyncApiDefintion<SelfMethodMap>;
+export declare type ApiDefinition<MethodMap extends DefaultMethodMap> = {
+    [f in keyof MethodMap]: (...args: tsargs.ArgsN<MethodMap[f]>) => ReturnType<MethodMap[f]> extends (void | undefined) ? void : ReturnType<MethodMap[f]> extends Promise<any> ? ReturnType<MethodMap[f]> : Promise<ReturnType<MethodMap[f]>>;
 };
 export declare type ApiProtocolArg = {
     value?: PodJSON;
@@ -23,7 +19,7 @@ export declare type ApiProtocol = {
 };
 export declare class Api<RemoteMethodMap extends DefaultMethodMap, SelfMethodMap extends DefaultMethodMap> {
     debugName: string;
-    constructor(definition: ApiDefinition<RemoteMethodMap, SelfMethodMap>, transport: ITransport, config?: Config, debugName?: string);
+    constructor(methods: ApiDefinition<SelfMethodMap>, transport: ITransport, config?: Config, debugName?: string);
     private handleRemoteCall;
     _call: (params: {
         method?: string | undefined;
@@ -42,12 +38,11 @@ export declare class Api<RemoteMethodMap extends DefaultMethodMap, SelfMethodMap
         [x: string]: PodJSON[];
         [x: number]: PodJSON[];
     }[]>;
-    callMethod: <Method extends keyof RemoteMethodMap>(method: Method, ...args: tsargs.ArgsN<RemoteMethodMap[Method]>) => ReturnType<_AsyncApiDefintion<RemoteMethodMap>[Method]>;
-    readonly definition: ApiDefinition<RemoteMethodMap, SelfMethodMap>;
+    callMethod: <Method extends keyof RemoteMethodMap>(method: Method, ...args: tsargs.ArgsN<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
+    readonly methods: ApiDefinition<SelfMethodMap>;
     readonly transport: ITransport;
     readonly config: Config;
     /** temp storage for remote callbacks */
     private readonly callbacks;
     nextUUID: UUIDGenerator;
 }
-export {};

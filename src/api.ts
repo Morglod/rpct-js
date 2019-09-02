@@ -2,26 +2,15 @@ import { Config, DefaultConfig } from './config';
 import { ITransport, ITransportRequestHandler, PodJSON } from './transport';
 import * as tsargs from 'tsargs';
 import { UUIDGenerator } from './utils';
-import { ArgsN } from 'tsargs';
 
 export type DefaultMethodMap = { [methodName: string]: (...args: any[]) => any };
-type _AsyncApiDefintion<MethodMap extends DefaultMethodMap> = {
-    [f in keyof MethodMap]: (...args: ArgsN<MethodMap[f]>) =>
+export type ApiDefinition<MethodMap extends DefaultMethodMap> = {
+    [f in keyof MethodMap]: (...args: tsargs.ArgsN<MethodMap[f]>) =>
         // if return type is void, return void
         ReturnType<MethodMap[f]> extends (void|undefined) ? void
             // otherwise wrap it to promise
             : ReturnType<MethodMap[f]> extends Promise<any> ? ReturnType<MethodMap[f]> : Promise<ReturnType<MethodMap[f]>>
 }
-
-export type ApiDefinition<
-    RemoteMethodMap extends DefaultMethodMap,
-    SelfMethodMap extends DefaultMethodMap,
-> = {
-    // version: string,
-    // minVersion?: string[],
-    // ignoreRemoteCall?: boolean|'disconnect'|'ban ip',
-    selfMethods?: _AsyncApiDefintion<SelfMethodMap>,
-};
 
 export type ApiProtocolArg = {
     value?: PodJSON,
@@ -39,13 +28,13 @@ export class Api<
     SelfMethodMap extends DefaultMethodMap,
 > {
     constructor(
-        definition: ApiDefinition<RemoteMethodMap, SelfMethodMap>,
+        methods: ApiDefinition<SelfMethodMap>,
         transport: ITransport,
         config: Config = DefaultConfig,
         public debugName = '',
     ) {
         this.nextUUID = config.uuidGeneratorFactory();
-        this.definition = definition;
+        this.methods = methods;
         this.transport = transport;
         this.config = config;
 
@@ -63,12 +52,12 @@ export class Api<
         // TODO: validate ApiProtocol
         
         if (data.method) {
-            if (!this.definition.selfMethods || !this.definition.selfMethods[data.method]) {
+            if (!this.methods || !this.methods[data.method]) {
                 console.error(`method '${data.method}' not found`);
                 return;
             }
             if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found selfMethod data.method="${data.method}"`);
-            func = this.definition.selfMethods[data.method];
+            func = this.methods[data.method];
         } else if (data.callback) {
             if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: it has a callback call request data.callback="${data.callback}"`);
             if (!this.callbacks[data.callback]) {
@@ -130,12 +119,12 @@ export class Api<
     callMethod = <Method extends keyof RemoteMethodMap>(
         method: Method,
         ...args: tsargs.ArgsN<RemoteMethodMap[Method]>
-    ): ReturnType<_AsyncApiDefintion<RemoteMethodMap>[Method]> => this._call({ method: method as any, args }) as any;
+    ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._call({ method: method as any, args }) as any;
 
     // TODO: call without callback mechanism, for speedup
     // callNoCallback;
 
-    readonly definition: ApiDefinition<RemoteMethodMap, SelfMethodMap>;
+    readonly methods: ApiDefinition<SelfMethodMap>;
     readonly transport: ITransport;
     readonly config: Config;
 

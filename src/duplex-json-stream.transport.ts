@@ -1,7 +1,7 @@
 import { Config, DefaultConfig } from './config';
 import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol } from './transport';
 import { TicketList } from './ticket-list';
-import { IStreamDuplex } from './streams';
+import { IStreamDuplex } from './stream.types';
 
 export class DuplexJsonStreamTransport implements ITransport {
     constructor(stream: IStreamDuplex, config: Config = DefaultConfig, public debugName: string = '') {
@@ -12,9 +12,7 @@ export class DuplexJsonStreamTransport implements ITransport {
         stream.on('data', async (chunk) => {
             let jsonStr;
 
-            if (chunk instanceof Buffer) {
-                jsonStr = chunk.toString('utf8');
-            } else if (chunk instanceof Uint8Array) {
+            if (chunk instanceof Uint8Array) {
                 jsonStr = chunk.toString();
             } else if (typeof chunk === 'object') {
                 jsonStr = chunk;

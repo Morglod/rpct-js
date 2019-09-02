@@ -1,4 +1,4 @@
-import { IStreamReadable, IStreamWritable, StreamWritableEvents } from "./streams";
+import { IStreamReadable, IStreamWritable, StreamWritableEvents } from "./stream.types";
 import * as tsee from 'tsee';
 import { ITransportProtocol } from "./transport";
 export declare const WINDOW_STREAM_DATA_FAIL: unique symbol;

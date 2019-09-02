@@ -4,7 +4,7 @@ const jsonStream = require('duplex-json-stream');
 
 import { Api } from "../api";
 import { DuplexJsonStreamTransport } from "../duplex-json-stream.transport";
-import { asDuplexStream } from "../streams";
+import { asDuplexStream } from "../stream.types";
 
 function remoteSum(a: number, b: number, cb: (result: number) => void) {
     console.log(`remoteSum(${a}, ${b}, cb)`);
@@ -47,9 +47,7 @@ async function server() {
             const chain = jsonStream(socket);
             const remoteStreamTransport = new DuplexJsonStreamTransport(asDuplexStream(chain), undefined, 'remote');
             const remoteApi = new Api<{}, { remoteSum: typeof remoteSum }>({
-                selfMethods: {
-                    remoteSum,
-                }
+                remoteSum,
             }, remoteStreamTransport);
         }).listen(socketPath, () => {
             console.log('server listening');
