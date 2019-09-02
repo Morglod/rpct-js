@@ -11,7 +11,9 @@ It can pass callbacks as arguments.
 
 Transport operates with data serialization and deserialization. It resend messages over any session to remote connected Transport.
 
-Browser minified version - 13kb (without compression).
+Browser minified sizes:  
+* 13kb (without compression)
+* 3.2kb (gzipped)
 
 ## Usage
 
@@ -22,9 +24,9 @@ Install from npm:
 npm i rpct
 ```
 
-Pick browser minified version:
-```
-rpct/browser/rpct.min.js
+Pick browser minified version and use global `RPCT` object:
+```html
+<script src="https://unpkg.com/rpct@0.0.1/browser/rpct.min.js"></script>
 ```
 
 [check out browser examples](./browser)
