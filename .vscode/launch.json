@@ -7,8 +7,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "examples/pipe-socket-msgpack",
-            "program": "${workspaceFolder}\\lib\\examples\\pipe-socket-msgpack.js",
+            "name": "hello example",
+            "program": "${workspaceFolder}/lib/examples/hello.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]

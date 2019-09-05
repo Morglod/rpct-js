@@ -66,7 +66,7 @@ export class Api<
             }
             if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found callback="${data.callback}"`);
             func = this.callbacks[data.callback];
-            delete this.callbacks[data.callback];
+            // delete this.callbacks[data.callback];
         } else {
             console.error('not method & not callback');
             return;
@@ -97,13 +97,15 @@ export class Api<
         args: any[]
     }) => {
         if (this.config.debug) console.log(`Api_${this.debugName} call: params="${JSON.stringify(params)}"`);
-        
+        const boundCallbacks: string[] = [];
+
         const apiProtocol: ApiProtocol = {
             method: params.method,
             callback: params.callback,
             args: params.args.map((arg, argI) => {
                 if (typeof arg === 'function') {
                     const callbackUUID = `${this.nextUUID()}`;
+                    boundCallbacks.push(callbackUUID);
                     this.callbacks[callbackUUID] = arg;
                     if (this.config.debug) console.log(`Api_${this.debugName} call: found func arg at ${argI} index, bound a callback as callbackUUID="${callbackUUID}"`);
                     return { callback: callbackUUID };
@@ -113,7 +115,13 @@ export class Api<
         };
 
         if (this.config.debug) console.log(`Api_${this.debugName} call: sending request to transport`);
-        return this.transport.request<ApiProtocol>(apiProtocol);
+        const result = await this.transport.request<ApiProtocol>(apiProtocol);
+
+        for (const cbUUID of boundCallbacks) {
+            delete this.callbacks[cbUUID];
+        }
+
+        return result;
     }
 
     callMethod = <Method extends keyof RemoteMethodMap>(
