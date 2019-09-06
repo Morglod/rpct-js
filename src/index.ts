@@ -12,3 +12,4 @@ export * from './window.stream';
 export * from 'tsee';
 export * from './stream.utils';
 export * from './hyperuuid';
+export * from './figma';
