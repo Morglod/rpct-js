@@ -26,7 +26,7 @@ npm i rpct
 
 Pick browser minified version and use global `RPCT` object:
 ```html
-<script src="https://unpkg.com/rpct@0.0.1/browser/rpct.min.js"></script>
+<script src="https://unpkg.com/rpct/browser/rpct.min.js"></script>
 ```
 
 [check out browser examples](./browser)
@@ -39,11 +39,50 @@ as Transport may be implemented any environment, eg:
 * Socket.io
 * DOM Window
 * System sockets
-<!-- * Figma plugin's data? -->
+* Figma UI-plugin
 
 [check out examples](./src/examples)
 
 With stream trasport you can use any streamable format like [json](./src/examples/pipe-socket-json.ts) or [msgpack](./src/examples/pong-pipe-socket-msgpack.ts).
+
+## Figma Plugin Example
+
+In ui:
+```ts
+import { connectToPlugin } from 'rpct/lib/figma';
+
+const api = connectToPlugin({
+    // UI's api methods
+    sum(a, b, sumCallback, mulCallback) {
+        console.log(`called sum(${a}, ${b})`);
+        sumCallback(a + b);
+        mulCallback(a * b);
+    },
+});
+```
+
+In plugin:
+```ts
+import { connectToUI } from 'rpct/lib/figma';
+
+const api = connectToUI({
+    // Plugin's api methods here
+});
+
+// call UI's `sum` method with callbacks!
+api.callMethod(
+    'sum',    // Remote api method
+    10,             // argument `a`
+    20,             // argument `b`
+    sumResult => console.log('sum:', sumResult),    // argument `sumCallback`
+    mulResult => console.log('mul:', mulResult)     // argument `mulCallback`
+);
+```
+
+You can use minified version from CDN (global `RPCT` object):
+```html
+<script src="https://unpkg.com/rpct/browser/figma.min.js"></script>
+```
 
 ## Window-Frame Example
 

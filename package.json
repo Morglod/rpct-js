@@ -1,21 +1,26 @@
 {
   "name": "rpct",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "rpc toolkit",
   "browser": "browser/rpct.min.js",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc && npm run-script build-browser && npm run-script build-browser-min",
+    "build": "tsc && npm run-script build-browser && npm run-script build-browser-min && npm run-script build-figma-min",
     "build-browser": "browserify lib/browser.js --standalone RPCT -o browser/rpct.js",
-    "build-browser-min": "browserify -p tinyify lib/browser.js --standalone RPCT -o browser/rpct.min.js"
+    "build-browser-min": "browserify -p tinyify lib/browser.js --standalone RPCT -o browser/rpct.min.js",
+    "build-figma-min": "browserify -p tinyify lib/figma.js --standalone RPCT -o browser/figma.min.js"
   },
   "keywords": [
     "rpc",
     "toolkit",
     "network",
     "remote",
-    "call"
+    "call",
+    "figma-rpc",
+    "fimga-plugin",
+    "fimga-plugins",
+    "fimga-plugin-rpc"
   ],
   "author": "morglod",
   "license": "MIT",
