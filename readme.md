@@ -1,3 +1,5 @@
+[![NPM Version](https://badge.fury.io/js/rpct.svg?style=flat)](https://www.npmjs.com/package/rpct)
+
 # rpct
 
 RPC toolkit.
