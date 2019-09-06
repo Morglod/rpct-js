@@ -38,7 +38,7 @@ export function connectToUI<
 >(
     figma: { ui: {
         postMessage(data:any): void,
-        onmessage(msg: any): void,
+        onmessage?(pluginMessage: any, props: any): void,
     }},
     pluginMethods: PluginMethods,
 ) {

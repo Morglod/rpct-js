@@ -5,6 +5,6 @@ export declare function connectToPlugin<PluginMethods extends DefaultMethodMap, 
 export declare function connectToUI<PluginMethods extends DefaultMethodMap, UIMethods extends DefaultMethodMap>(figma: {
     ui: {
         postMessage(data: any): void;
-        onmessage(msg: any): void;
+        onmessage?(pluginMessage: any, props: any): void;
     };
 }, pluginMethods: PluginMethods): void;
