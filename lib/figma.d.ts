@@ -7,4 +7,4 @@ export declare function connectToUI<PluginMethods extends DefaultMethodMap, UIMe
         postMessage(data: any): void;
         onmessage?(pluginMessage: any, props: any): void;
     };
-}, pluginMethods: PluginMethods): void;
+}, pluginMethods: PluginMethods): Api<UIMethods, PluginMethods>;

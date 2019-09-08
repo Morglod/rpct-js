@@ -51,5 +51,5 @@ export function connectToUI<
 
     const streamTransport = new StreamTransport(rstream, wstream, undefined, 'plugin back');
 
-    const api = new Api<UIMethods, PluginMethods>(pluginMethods, streamTransport);
+    return new Api<UIMethods, PluginMethods>(pluginMethods, streamTransport);
 }

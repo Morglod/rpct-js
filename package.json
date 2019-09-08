@@ -1,6 +1,6 @@
 {
   "name": "rpct",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "rpc toolkit",
   "browser": "browser/rpct.min.js",
   "main": "lib/index.js",
