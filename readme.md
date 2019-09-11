@@ -51,34 +51,22 @@ With stream trasport you can use any streamable format like [json](./src/example
 
 In ui:
 ```ts
-import { connectToPlugin } from 'rpct/lib/figma';
+pluginApi = connectToPlugin<PluginMethods, UIMethods>({});
 
-const api = connectToPlugin({
-    // UI's api methods
-    sum(a, b, sumCallback, mulCallback) {
-        console.log(`called sum(${a}, ${b})`);
-        sumCallback(a + b);
-        mulCallback(a * b);
-    },
-});
+// invoke createRectangle(100, 50)
+createdNodeId = await pluginApi.callMethod('createRectangle', 100, 50);
 ```
 
 In plugin:
 ```ts
-import { connectToUI } from 'rpct/lib/figma';
-
-const api = connectToUI({
-    // Plugin's api methods here
+uiApi = connectToUI<PluginMethods, UIMethods>(figma, {
+    createRectangle(width, height) {
+        const rect = figma.createRectangle();
+        rect.resize(width, height);
+        figma.currentPage.appendChild(rect);
+        return rect.id;
+    }
 });
-
-// call UI's `sum` method with callbacks!
-api.callMethod(
-    'sum',    // Remote api method
-    10,             // argument `a`
-    20,             // argument `b`
-    sumResult => console.log('sum:', sumResult),    // argument `sumCallback`
-    mulResult => console.log('mul:', mulResult)     // argument `mulCallback`
-);
 ```
 
 You can use minified version from CDN (global `RPCT` object):
