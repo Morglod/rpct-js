@@ -5,7 +5,8 @@ import { Api } from "../api";
 import { StreamTransport } from "../stream.transport";
 import { messagePackTransforms } from './message-pack-transform';
 
-const SOCKET_PATH = path.join('\\\\?\\pipe', process.cwd(), 'myctl');
+const WINDOWS = 0;
+const SOCKET_PATH = WINDOWS ? path.join('\\\\?\\pipe', process.cwd(), 'myctl') : './test-socket';
 
 type ApiDefinition = {
     ping(
@@ -34,7 +35,9 @@ function client() {
         writable.pipe(conn);
 
         const localStreamTransport = new StreamTransport(readable, writable, undefined, 'local');
-        const localApi = new Api<ApiDefinition, {}>({}, localStreamTransport, undefined, 'local');
+        const localApi = new Api<ApiDefinition, {}>({}, localStreamTransport, {
+            debugName: 'local'
+        });
     
         localApi.callMethod(
             'ping',
@@ -69,7 +72,9 @@ function server() {
                     console.log(await r);
                 })
             }
-        }, remoteStreamTransport, undefined, 'remote');
+        }, remoteStreamTransport, {
+            debugName: 'remote'
+        });
     
     }).listen(SOCKET_PATH, () => {
         console.log('server listening');

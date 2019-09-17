@@ -1,21 +1,54 @@
 import { Config, DefaultConfig } from './config';
-import { ITransport, ITransportRequestHandler, PodJSON } from './transport';
-import * as tsargs from 'tsargs';
+import { ITransport, ITransportRequestHandler } from './transport';
+import { ArgsN } from 'tsargs';
 import { UUIDGenerator } from './utils';
+import { PodJSON } from './types';
+import { callbacksMiddleware } from './middlewares/callbacks';
 
 export type DefaultMethodMap = { [methodName: string]: (...args: any[]) => any };
 export type ApiDefinition<MethodMap extends DefaultMethodMap> = {
-    [f in keyof MethodMap]: (...args: tsargs.ArgsN<MethodMap[f]>) =>
+    [f in keyof MethodMap]: (...args: ArgsN<MethodMap[f]>) =>
         // if return type is void, return void
         ReturnType<MethodMap[f]> extends (void|undefined) ? void
             // otherwise wrap it to promise
             : ReturnType<MethodMap[f]> extends Promise<any> ? ReturnType<MethodMap[f]> : Promise<ReturnType<MethodMap[f]>>
 }
 
-export type ApiProtocolArg = {
-    value?: PodJSON,
-    callback?: string,
+export enum ApiProtocolArgTypeFlag {
+    none = 0,
+    value = 1,
+    callback = 2,
+
+    // [0..16] RESERVED BITS
+
+    /**
+     * to detect extensions, `extension` bit must be set  
+     * ps `1 << 16`
+     */
+    extension = 65536,
+
+    // [17..32] CUSTOM USER BITS
+}
+
+type ApiProtocolArg_None = {
+    type: ApiProtocolArgTypeFlag.none
 };
+
+type ApiProtocolArg_Value = {
+    type: ApiProtocolArgTypeFlag.value,
+    value: PodJSON,
+};
+
+type ApiProtocolArg_Callback = {
+    type: ApiProtocolArgTypeFlag.callback,
+    callback: string,
+};
+
+export type ApiProtocolArg =
+    ApiProtocolArg_None |
+    ApiProtocolArg_Value |
+    ApiProtocolArg_Callback
+;
 
 export type ApiProtocol = {
     method?: string,
@@ -28,53 +61,76 @@ export class Api<
     SelfMethodMap extends DefaultMethodMap,
 > {
     constructor(
-        methods: ApiDefinition<SelfMethodMap>,
+        methods: SelfMethodMap,
         transport: ITransport,
-        config: Config = DefaultConfig,
-        public debugName = '',
+        opts: {
+            config?: Config,
+            debugName?: string,
+            middlewares?: ApiMiddleware[]
+        } = {}
     ) {
+        const {
+            config = DefaultConfig,
+            debugName = '',
+            middlewares = [
+                callbacksMiddleware(),
+            ],
+        } = opts;
+        
         this.nextUUID = config.uuidGeneratorFactory();
         this.methods = methods;
         this.transport = transport;
         this.config = config;
+        this.debugName = debugName;
 
         transport.setRequestHandler(this.handleRemoteCall);
+
+        for (const m of middlewares) {
+            this.addMiddleware(m);
+        }
     }
 
+    debugName: string;
+
     private handleRemoteCall: ITransportRequestHandler = (v) => {
+        const rid = this.requestCounter();
+
         if (this.config.debug) {
-            console.log(`Api_${this.debugName} handleRemoteCall: "${JSON.stringify(v)}"`);
+            console.log(`Api_${this.debugName} handleRemoteCall: "${JSON.stringify(v)}" rid=${rid}`);
         }
         const data = v as ApiProtocol;
         let func: Function;
 
         if (!data) throw new Error('Api: handleRemoteCall failed, undefined data');
         // TODO: validate ApiProtocol
-        
-        if (data.method) {
-            if (!this.methods || !this.methods[data.method]) {
-                console.error(`method '${data.method}' not found`);
+
+        this._hook_preHandleRemoteCall(data, rid);
+
+        const pickedFunc = this._hook_handleRemoteCallPickMethod(data, rid);
+
+        if (pickedFunc) {
+            func = pickedFunc;
+        }
+        else {
+            if (data.method) {
+                if (!this.methods || !this.methods[data.method]) {
+                    console.error(`method '${data.method}' not found`);
+                    return;
+                }
+                if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found selfMethod data.method="${data.method}"`);
+                func = this.methods[data.method];
+            } else {
+                console.error('not method & not callback');
                 return;
             }
-            if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found selfMethod data.method="${data.method}"`);
-            func = this.methods[data.method];
-        } else if (data.callback) {
-            if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: it has a callback call request data.callback="${data.callback}"`);
-            if (!this.callbacks[data.callback]) {
-                console.error(`callback '${data.method}' not found`);
-                return;
-            }
-            if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found callback="${data.callback}"`);
-            func = this.callbacks[data.callback];
-            // delete this.callbacks[data.callback];
-        } else {
-            console.error('not method & not callback');
-            return;
         }
 
         if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: processing data.args`);
         const args = data.args.map((arg, argI) => {
-            if (arg.callback) {
+            const unpacked = this._hook_unpackArg(arg, argI, rid);
+            if (unpacked) return unpacked;
+
+            if (arg.type === ApiProtocolArgTypeFlag.callback) {
                 if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: callback at ${argI} arg index, returning proxy`);
                 return (...callbackArgs: any[]) => {
                     if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: proxy call for ${argI} arg index, callbackArgs="${JSON.stringify(callbackArgs)}", callback="${arg.callback}"`);
@@ -84,49 +140,69 @@ export class Api<
                     });
                 };
             }
-            return arg.value;
+
+            if (arg.type === ApiProtocolArgTypeFlag.value) {
+                return arg.value;
+            }
+
+            return undefined;
         });
 
         if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: invoking func`);
-        return func(...args);
+        const returnValue = func(...args);
+
+        this._hook_postHandleRemoteCall(rid);
+
+        const packedResult = this._hook_packReturnValue(returnValue, rid);
+        if (packedResult) return packedResult;
+
+        return returnValue;
     }
 
-    _call = async (params: {
+    private _call = async (params: {
         method?: string,
         callback?: string,
         args: any[]
     }) => {
-        if (this.config.debug) console.log(`Api_${this.debugName} call: params="${JSON.stringify(params)}"`);
-        const boundCallbacks: string[] = [];
+        const rid = this.requestCounter();
+
+        if (this.config.debug) console.log(`Api_${this.debugName} call: params="${JSON.stringify(params)}" rid=${rid}`);
+
+        this._hook_call(params, rid);
 
         const apiProtocol: ApiProtocol = {
             method: params.method,
             callback: params.callback,
             args: params.args.map((arg, argI) => {
-                if (typeof arg === 'function') {
-                    const callbackUUID = `${this.nextUUID()}`;
-                    boundCallbacks.push(callbackUUID);
-                    this.callbacks[callbackUUID] = arg;
-                    if (this.config.debug) console.log(`Api_${this.debugName} call: found func arg at ${argI} index, bound a callback as callbackUUID="${callbackUUID}"`);
-                    return { callback: callbackUUID };
-                }
-                return { value: arg };
+                const packed = this._hook_packArg(arg, argI, rid);
+                if (packed) return packed;
+
+                return {
+                    type: ApiProtocolArgTypeFlag.value,
+                    value: arg,
+                };
             }),
         };
 
         if (this.config.debug) console.log(`Api_${this.debugName} call: sending request to transport`);
         const result = await this.transport.request<ApiProtocol>(apiProtocol);
 
-        for (const cbUUID of boundCallbacks) {
-            delete this.callbacks[cbUUID];
-        }
+        this._hook_postCall(params, rid);
 
+        const unpackedResult = this._hook_unpackReturnValue(result, rid);
+        if (unpackedResult) return unpackedResult;
         return result;
     }
 
-    callMethod = <Method extends keyof RemoteMethodMap>(
+    /** deprecated, use `call` instead */
+    readonly callMethod = <Method extends keyof RemoteMethodMap>(
         method: Method,
-        ...args: tsargs.ArgsN<RemoteMethodMap[Method]>
+        ...args: ArgsN<RemoteMethodMap[Method]>
+    ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._call({ method: method as any, args }) as any;
+
+    readonly call = <Method extends keyof RemoteMethodMap>(
+        method: Method,
+        ...args: ArgsN<RemoteMethodMap[Method]>
     ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._call({ method: method as any, args }) as any;
 
     // TODO: call without callback mechanism, for speedup
@@ -136,8 +212,195 @@ export class Api<
     readonly transport: ITransport;
     readonly config: Config;
 
-    /** temp storage for remote callbacks */
-    private readonly callbacks: { [uuid: string]: Function } = {};
-
     nextUUID: UUIDGenerator;
+
+    requestCounter: () => number = (() => {
+        let counter = 0;
+        return () => counter++;
+    })();
+
+    readonly hooks: {
+        readonly [hookName in MIDDLEWARE_HOOK_NAME]: Required<ApiMiddleware>[hookName][]
+    } = MIDDLEWARE_HOOKS.reduce((sum, hookName) => (
+        Object.assign(sum, { [hookName]: [] as Required<ApiMiddleware>[typeof hookName][] })
+    ), {} as {
+        readonly [hookName in MIDDLEWARE_HOOK_NAME]: Required<ApiMiddleware>[hookName][]
+    });
+
+    private _hook_call = (
+        params: {
+            method?: string,
+            callback?: string,
+            args: any[]
+        },
+        requestId: number,
+    ) => {
+        if (this.hooks.call.length === 0) return;
+
+        const originalParams = {
+            ...params,
+            args: [
+                ...params.args,
+            ],
+        };
+
+        for (const hook of this.hooks.call) {
+            hook(params, originalParams, requestId);
+        }
+    };
+
+    private _hook_postCall = (
+        params: {
+            method?: string,
+            callback?: string,
+            args: any[]
+        },
+        requestId: number,
+    ) => {
+        if (this.hooks.postCall.length === 0) return;
+        for (const hook of this.hooks.postCall) hook(params, requestId);
+    };
+
+    private _hook_preHandleRemoteCall = (data: ApiProtocol, requestId: number) => {
+        if (this.hooks.preHandleRemoteCall.length === 0) return;
+        for (const hook of this.hooks.preHandleRemoteCall) hook(data, requestId);
+    };
+
+    private _hook_handleRemoteCallPickMethod = (data: ApiProtocol, requestId: number) => {
+        if (this.hooks.handleRemoteCallPickMethod.length === 0) return;
+
+        let prevPicked;
+        for (const hook of this.hooks.handleRemoteCallPickMethod) {
+            prevPicked = hook(prevPicked, data, requestId);
+        }
+
+        return prevPicked;
+    };
+
+    private _hook_postHandleRemoteCall = (requestId: number) => {
+        if (this.hooks.postHandleRemoteCall.length === 0) return;
+        for (const hook of this.hooks.postHandleRemoteCall) hook(requestId);
+    };
+
+    private _hook_packArg = (originalArg: any, argIndex: number, requestId: number): ApiProtocolArg|undefined => {
+        if (this.hooks.packArg.length === 0) return;
+
+        let packedArg = undefined;
+        for (const hook of this.hooks.packArg) {
+            packedArg = hook(packedArg, originalArg, argIndex, requestId);
+        }
+
+        return packedArg;
+    };
+
+    private _hook_unpackArg = (originalArg: ApiProtocolArg, argIndex: number, requestId: number): any|undefined => {
+        if (this.hooks.unpackArg.length === 0) return;
+
+        let unpackedArg = undefined;
+        for (const hook of this.hooks.unpackArg) {
+            unpackedArg = hook(unpackedArg, originalArg, argIndex, requestId);
+        }
+
+        return unpackedArg;
+    };
+
+    private _hook_packReturnValue = (originalReturnValue: any, requestId: number): PodJSON|undefined => {
+        if (this.hooks.packReturnValue.length === 0) return;
+
+        let packedReturn = undefined;
+        for (const hook of this.hooks.packReturnValue) {
+            packedReturn = hook(packedReturn, originalReturnValue, requestId);
+        }
+
+        return packedReturn;
+    };
+
+    private _hook_unpackReturnValue = (originalReturnValue: PodJSON, requestId: number): any|undefined => {
+        if (this.hooks.unpackReturnValue.length === 0) return;
+
+        let unpackedReturn = undefined;
+        for (const hook of this.hooks.unpackReturnValue) {
+            unpackedReturn = hook(unpackedReturn, originalReturnValue, requestId);
+        }
+
+        return unpackedReturn;
+    };
+
+    readonly addMiddleware = async (middleware: ApiMiddleware) => {
+        if (middleware.install) {
+            middleware.install.call(middleware, this, middleware);
+        }
+
+        for (const hookName of MIDDLEWARE_HOOKS) {
+            if (middleware[hookName]) {
+                this.hooks[hookName].push(middleware[hookName]!.bind(middleware) as any);
+            }
+        }
+    };
 }
+
+const MIDDLEWARE_HOOKS = [
+    'call',
+    'postCall',
+    'preHandleRemoteCall',
+    'handleRemoteCallPickMethod',
+    'postHandleRemoteCall',
+    'packArg',
+    'unpackArg',
+    'packReturnValue',
+    'unpackReturnValue'
+] as const;
+
+type MIDDLEWARE_HOOK_NAME = typeof MIDDLEWARE_HOOKS[number];
+
+export type ApiMiddleware<
+    ApiT extends Api<RemoteMethodMap, SelfMethodMap> = Api<any, any>,
+    RemoteMethodMap extends DefaultMethodMap = any,
+    SelfMethodMap extends DefaultMethodMap = any,
+> = {
+    /** runs on api.addMiddleware */
+    install?(
+        api: ApiT,
+        middleware: ApiMiddleware<ApiT, RemoteMethodMap, SelfMethodMap>
+    ): void;
+
+    call?(
+        params: {
+            method?: string,
+            callback?: string,
+            args: any[]
+        },
+        originalParams: {
+            method?: string,
+            callback?: string,
+            args: any[]
+        },
+        requestId: number,
+    ): void;
+
+    postCall?(
+        params: {
+            method?: string,
+            callback?: string,
+            args: any[]
+        },
+        requestId: number
+    ): void;
+
+    /** preprocess data */
+    preHandleRemoteCall?(data: ApiProtocol, requestId: number): void;
+    handleRemoteCallPickMethod?(prevPicked: Function|undefined, data: ApiProtocol, requestId: number): Function|undefined;
+    postHandleRemoteCall?(requestId: number): void;
+
+    /** pack arg on call */
+    packArg?(packedArg: ApiProtocolArg|undefined, originalArg: any, argIndex: number, requestId: number): ApiProtocolArg|undefined;
+
+    /** unpack arg on handle remote call */
+    unpackArg?(unpackedArg: any|undefined, originalArg: ApiProtocolArg, argIndex: number, requestId: number): any;
+
+    /** pack returning value after call handling */
+    packReturnValue?(packedReturnValue: PodJSON|undefined, originalReturnValue: any, requestId: number): PodJSON|undefined;
+
+    /** unpack returned value after call */
+    unpackReturnValue?(unpackedReturnValue: any|undefined, originalReturnValue: PodJSON, requestId: number): any;
+};

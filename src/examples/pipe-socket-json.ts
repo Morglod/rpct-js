@@ -11,7 +11,8 @@ function remoteSum(a: number, b: number, cb: (result: number) => void) {
     cb(a + b);
 }
 
-const socketPath = path.join('\\\\?\\pipe', process.cwd(), 'myctl');
+const WINDOWS = 0;
+const SOCKET_PATH = WINDOWS ? path.join('\\\\?\\pipe', process.cwd(), 'myctl') : './test-socket';
 
 (async function main() {
     const srv = await server();
@@ -20,7 +21,7 @@ const socketPath = path.join('\\\\?\\pipe', process.cwd(), 'myctl');
 
 async function client() {
     return new Promise(resolve => {
-        const conn = net.connect(socketPath, async () => {
+        const conn = net.connect(SOCKET_PATH, async () => {
             const chain = jsonStream(conn);
 
             const localStreamTransport = new DuplexJsonStreamTransport(asDuplexStream(chain), undefined, 'local');
@@ -49,7 +50,7 @@ async function server() {
             const remoteApi = new Api<{}, { remoteSum: typeof remoteSum }>({
                 remoteSum,
             }, remoteStreamTransport);
-        }).listen(socketPath, () => {
+        }).listen(SOCKET_PATH, () => {
             console.log('server listening');
             resolve(srv);
         }).on('error', err => {

@@ -2,11 +2,13 @@ import { Api } from "../api";
 import { DuplexStreamTransport } from "../duplex-stream.transport";
 import { simpleCrossStream } from "../stream.utils";
 import { ITransportProtocol } from "../transport";
+import { callbacksMiddleware } from "../middlewares/callbacks";
 
 function remoteSum(a: number, b: number, sumCallback: (result: number) => void, mulCallback: (result: number) => void) {
     console.log(`remoteSum(${a}, ${b})`);
     sumCallback(a + b);
     mulCallback(a * b);
+    mulCallback(a * b + 5);
 }
 
 (async function main() {

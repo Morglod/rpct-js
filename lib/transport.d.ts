@@ -1,16 +1,6 @@
 import { Config } from "./config";
 import { TicketListUUID } from "./ticket-list";
-declare type _POD_ = string | number | boolean | undefined | null;
-declare type _POD_A = _POD_[] | _POD_;
-export declare type PodJSON = _POD_A | {
-    [x in string | number]: PodJSON;
-} | {
-    [x in string | number]: PodJSON[];
-} | {
-    [x in string | number]: PodJSON;
-}[] | {
-    [x in string | number]: PodJSON[];
-}[];
+import { PodJSON } from "./types";
 /** any serializable JSON type */
 export declare type ITransportData = Exclude<PodJSON, null | undefined>;
 export declare type ITransportRequestHandler = (data: ITransportData) => Promise<ITransportData>;
@@ -33,4 +23,3 @@ export interface ITransportSlave extends ITransportConfigurable {
 /** Master + Slave */
 export interface ITransport extends ITransportMaster, ITransportSlave {
 }
-export {};

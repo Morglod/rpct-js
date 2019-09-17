@@ -1,6 +1,7 @@
 import { TicketListUUID } from "./ticket-list";
+import { PodJSON } from "./types";
 
-export function cloneJSON(x: any) {
+export function cloneJSON<T extends PodJSON>(x: T): T {
     return JSON.parse(JSON.stringify(x));
 }
 

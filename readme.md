@@ -11,11 +11,23 @@ It can receive message and invoke local method.
 It can emit message and send to remote api to invoke remote method.  
 It can pass callbacks as arguments.  
 
+Api can be easily extended with [middlewares & hooks]('./src/middlewares).
+
 Transport operates with data serialization and deserialization. It resend messages over any session to remote connected Transport.
 
 Browser minified sizes:  
-* 13kb (without compression)
-* 3.2kb (gzipped)
+* 17kb (without compression)
+* 4kb (gzipped)
+
+## Some stats
+
+json stream without callbacks:  
+0.1ms per request
+9600rps
+
+json stream with callbacks:  
+0.2ms per request
+5000rps
 
 ## Usage
 
@@ -48,6 +60,15 @@ as Transport may be implemented any environment, eg:
 With stream trasport you can use any streamable format like [json](./src/examples/pipe-socket-json.ts) or [msgpack](./src/examples/pong-pipe-socket-msgpack.ts).
 
 ## Figma Plugin Example
+
+Define "protocol":
+```ts
+interface PluginMethods {
+    createRectangle(width: number, height: number): string;
+}
+
+interface UIMethods {}
+```
 
 In ui:
 ```ts

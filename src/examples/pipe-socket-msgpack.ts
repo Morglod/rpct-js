@@ -5,7 +5,8 @@ import { Api } from "../api";
 import { StreamTransport } from "../stream.transport";
 import { messagePackTransforms } from './message-pack-transform';
 
-const SOCKET_PATH = path.join('\\\\?\\pipe', process.cwd(), 'myctl');
+const WINDOWS = 0;
+const SOCKET_PATH = WINDOWS ? path.join('\\\\?\\pipe', process.cwd(), 'myctl') : './test-socket';
 
 type ApiDefinition = {
     remoteSum(
@@ -14,7 +15,7 @@ type ApiDefinition = {
         sumResult: (result: number) => string,
         mulResult: (result: number) => string,
         powResult: (result: number) => string,
-    ): string;
+    ): Promise<string>;
 };
 
 (function main() {
@@ -34,7 +35,9 @@ function client() {
         writable.pipe(conn);
 
         const localStreamTransport = new StreamTransport(readable, writable, undefined, 'local');
-        const localApi = new Api<ApiDefinition, {}>({}, localStreamTransport, undefined, 'local');
+        const localApi = new Api<ApiDefinition, {}>({}, localStreamTransport, {
+            debugName: 'local'
+        });
     
         const word = await localApi.callMethod(
             'remoteSum',
@@ -80,7 +83,9 @@ function server() {
                 const word3 = await pow(a ** b);
                 return word1 + word2 + word3;
             },
-        }, remoteStreamTransport, undefined, 'remote');
+        }, remoteStreamTransport, {
+            debugName: 'remote'
+        });
     
     }).listen(SOCKET_PATH, () => {
         console.log('server listening');

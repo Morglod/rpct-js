@@ -1,6 +1,6 @@
-import * as tsee from 'tsee';
+import { EventEmitter } from 'tsee';
 import { StreamWritableEvents } from './stream.types';
-export declare class FigmaPluginWriteStream<ITransportProtocol> extends tsee.EventEmitter<StreamWritableEvents> {
+export declare class FigmaPluginWriteStream<ITransportProtocol> extends EventEmitter<StreamWritableEvents> {
     readonly figma: {
         ui: {
             postMessage(data: any): void;
