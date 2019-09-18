@@ -1,5 +1,5 @@
 import { Config, DefaultConfig } from './config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol } from './transport';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from './transport';
 import { TicketList } from './ticket-list';
 import { IStreamReadable, IStreamWritable, StreamReadableLike, asReadableStream, asWritableStream, StreamWritableLike } from './stream.types';
 
@@ -32,15 +32,14 @@ export class StreamTransport implements ITransport {
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: no pending ticket with this uuid="${msg.uuid}", calling requestHandler`);
                 const resp = await this.requestHandler(msg.data)
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: requestHandler for uuid="${msg.uuid}", answered data: "${JSON.stringify(resp)}"`);
-                this.wstream.write({
+                this.wstream.write(Object.assign(resp, {
                     uuid: msg.uuid,
-                    data: resp,
-                });
+                }));
             }
         });
     }
 
-    request(data: ITransportData): Promise<ITransportData> {
+    request(data: ITransportData): Promise<ITransportResponse> {
         const uuid = this.pending.nextUUID();
         
         const req: ITransportProtocol = {
@@ -52,7 +51,10 @@ export class StreamTransport implements ITransport {
 
         const { answer } = this.pending.ask(req.uuid);
         this.wstream.write(req);
-        return answer.then(x => x.data);
+        return answer.catch(err => ({
+            data: undefined,
+            exception: `${err}`,
+        }));
     }
 
     setRequestHandler(handler: ITransportRequestHandler): void {

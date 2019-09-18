@@ -39,6 +39,7 @@ type RemoteApi = {
         const start = process.hrtime();
 
         const r = await localApi.call('remoteCall', a, b, c => c);
+        if (a+b !== r) throw new Error('bad result');
 
         const [, nanosecDiff] = process.hrtime(start);
 

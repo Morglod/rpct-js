@@ -2,17 +2,18 @@ import { Config } from './config';
 import { ITransport } from './transport';
 import { ArgsN } from 'tsargs';
 import { UUIDGenerator } from './utils';
-import { PodJSON } from './types';
+import { PodJSON, PromisifyFuncReturnType } from './types';
 export declare type DefaultMethodMap = {
     [methodName: string]: (...args: any[]) => any;
 };
 export declare type ApiDefinition<MethodMap extends DefaultMethodMap> = {
-    [f in keyof MethodMap]: (...args: ArgsN<MethodMap[f]>) => ReturnType<MethodMap[f]> extends (void | undefined) ? void : ReturnType<MethodMap[f]> extends Promise<any> ? ReturnType<MethodMap[f]> : Promise<ReturnType<MethodMap[f]>>;
+    [f in keyof MethodMap]: PromisifyFuncReturnType<MethodMap[f]>;
 };
 export declare enum ApiProtocolArgTypeFlag {
     none = 0,
     value = 1,
     callback = 2,
+    proxy = 4,
     /**
      * to detect extensions, `extension` bit must be set
      * ps `1 << 16`
@@ -30,7 +31,11 @@ declare type ApiProtocolArg_Callback = {
     type: ApiProtocolArgTypeFlag.callback;
     callback: string;
 };
-export declare type ApiProtocolArg = ApiProtocolArg_None | ApiProtocolArg_Value | ApiProtocolArg_Callback;
+declare type ApiProtocolArg_Proxy = {
+    type: ApiProtocolArgTypeFlag.proxy;
+    objId: string | number;
+};
+export declare type ApiProtocolArg = ApiProtocolArg_None | ApiProtocolArg_Value | ApiProtocolArg_Callback | ApiProtocolArg_Proxy;
 export declare type ApiProtocol = {
     method?: string;
     callback?: string;
@@ -48,7 +53,7 @@ export declare class Api<RemoteMethodMap extends DefaultMethodMap, SelfMethodMap
     /** deprecated, use `call` instead */
     readonly callMethod: <Method extends keyof RemoteMethodMap>(method: Method, ...args: ArgsN<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
     readonly call: <Method extends keyof RemoteMethodMap>(method: Method, ...args: ArgsN<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
-    readonly methods: ApiDefinition<SelfMethodMap>;
+    readonly methods: SelfMethodMap;
     readonly transport: ITransport;
     readonly config: Config;
     nextUUID: UUIDGenerator;

@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
             "type": "node",
             "request": "launch",
@@ -19,6 +20,15 @@
             "request": "launch",
             "name": "bench",
             "program": "${workspaceFolder}/lib/examples/benchmark.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "proxy",
+            "program": "${workspaceFolder}/lib/examples/proxy.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]

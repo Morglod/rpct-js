@@ -6,4 +6,15 @@ export type PodJSON =
     { [x in string|number]: PodJSON }|
     { [x in string|number]: PodJSON[] }|
     { [x in string|number]: PodJSON }[]|
-    { [x in string|number]: PodJSON[] }[];
+    { [x in string|number]: PodJSON[] }[]
+;
+
+export type PlainUUID = string|number;
+
+export type PromisifyFuncReturnType<
+    FuncT extends (...args: any[]) => any,
+    FuncReturn = ReturnType<FuncT>,
+> =
+    FuncReturn extends Promise<any> ? ((...args: Parameters<FuncT>) => FuncReturn) :
+        (...args: Parameters<FuncT>) => Promise<FuncReturn>
+;

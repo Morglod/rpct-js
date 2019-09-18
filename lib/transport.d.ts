@@ -1,19 +1,22 @@
 import { Config } from "./config";
-import { TicketListUUID } from "./ticket-list";
-import { PodJSON } from "./types";
+import { PodJSON, PlainUUID } from "./types";
 /** any serializable JSON type */
-export declare type ITransportData = Exclude<PodJSON, null | undefined>;
-export declare type ITransportRequestHandler = (data: ITransportData) => Promise<ITransportData>;
+export declare type ITransportData = PodJSON;
+export declare type ITransportRequestHandler = (data: ITransportData) => Promise<ITransportResponse>;
 export declare type ITransportProtocol = {
-    uuid: TicketListUUID;
+    uuid: PlainUUID;
     data: ITransportData;
+};
+export declare type ITransportResponse = {
+    data: ITransportData;
+    exception?: string;
 };
 export interface ITransportConfigurable {
     setConfig(config: Config): Promise<void> | void;
 }
 export interface ITransportMaster extends ITransportConfigurable {
     /** make request to remote connected slave */
-    request<Data extends ITransportData>(data: Data): Promise<ITransportData>;
+    request<Data extends ITransportData>(data: Data): Promise<ITransportResponse>;
 }
 export interface ITransportSlave extends ITransportConfigurable {
     /** handle request from remote connected master with request handler */

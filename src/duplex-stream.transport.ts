@@ -1,5 +1,5 @@
 import { Config, DefaultConfig } from './config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol } from './transport';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from './transport';
 import { TicketList } from './ticket-list';
 import { IStreamDuplex } from './stream.types';
 
@@ -29,15 +29,14 @@ export class DuplexStreamTransport implements ITransport {
             } else {
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: forEach requestHandler`);
                 const resp = await this.requestHandler(msg.data);
-                this.stream.write({
+                this.stream.write(Object.assign(resp, {
                     uuid: msg.uuid,
-                    data: resp,
-                });
+                }));
             }
         });
     }
 
-    request(data: ITransportData): Promise<ITransportData> {
+    request(data: ITransportData): Promise<ITransportResponse> {
         const uuid = this.pending.nextUUID();
         
         const req: ITransportProtocol = {
@@ -49,7 +48,10 @@ export class DuplexStreamTransport implements ITransport {
 
         const { answer } = this.pending.ask(req.uuid);
         this.stream.write(req);
-        return answer;
+        return answer.catch(err => ({
+            data: undefined,
+            exception: `${err}`,
+        }));
     }
 
     setRequestHandler(handler: ITransportRequestHandler): void {

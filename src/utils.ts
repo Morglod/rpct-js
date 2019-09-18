@@ -1,14 +1,13 @@
-import { TicketListUUID } from "./ticket-list";
-import { PodJSON } from "./types";
+import { PodJSON, PlainUUID } from "./types";
 
 export function cloneJSON<T extends PodJSON>(x: T): T {
     return JSON.parse(JSON.stringify(x));
 }
 
-export type UUIDGenerator = (() => TicketListUUID);
+export type UUIDGenerator = (() => PlainUUID);
 export type UUIDGeneratorFactory = () => UUIDGenerator;
 
-export function simpleCountGenerator(): UUIDGenerator {
+export function simpleCountGenerator(): () => number {
     let counter = 0;
 
     return () => {

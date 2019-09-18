@@ -1,6 +1,6 @@
 import 'socket.io-client';
 import { Config } from './config';
-import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData } from './transport';
+import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse } from './transport';
 import { TicketList } from './ticket-list';
 export declare type SocketIOTransportProtocolHandler = (response: ITransportProtocol) => void;
 export declare type SocketIOSocket = {
@@ -9,7 +9,7 @@ export declare type SocketIOSocket = {
 };
 export declare class SocketIOTransport implements ITransport {
     constructor(socket: SocketIOSocket, config?: Config);
-    request(data: ITransportData): Promise<ITransportData>;
+    request(data: ITransportData): Promise<ITransportResponse>;
     setRequestHandler(handler: ITransportRequestHandler): void;
     getRequestHandler(): ITransportRequestHandler;
     setConfig(config: Config): void;

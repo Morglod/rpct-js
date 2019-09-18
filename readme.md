@@ -10,6 +10,7 @@ Api operates with messages.
 It can receive message and invoke local method.  
 It can emit message and send to remote api to invoke remote method.  
 It can pass callbacks as arguments.  
+It raises up remote exceptions.  
 
 Api can be easily extended with [middlewares & hooks]('./src/middlewares).
 

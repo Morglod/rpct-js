@@ -1,7 +1,7 @@
 import 'socket.io-client';
 
 import { Config, DefaultConfig } from './config';
-import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData } from './transport';
+import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse } from './transport';
 import { TicketList } from './ticket-list';
 
 export type SocketIOTransportProtocolHandler = (response: ITransportProtocol) => void;
@@ -25,15 +25,14 @@ export class SocketIOTransport implements ITransport {
             } else {
                 if (this.config.debug) console.log('SocketIOTransport: forEach requestHandler');
                 const resp = await this.requestHandler(response.data);
-                this.socket.emit(this.eventName, {
+                this.socket.emit(this.eventName, Object.assign(resp, {
                     uuid: response.uuid,
-                    data: resp,
-                });
+                }));
             }
         });
     }
 
-    request(data: ITransportData): Promise<ITransportData> {
+    request(data: ITransportData): Promise<ITransportResponse> {
         const uuid = this.pending.nextUUID();
         
         const req: ITransportProtocol = {
@@ -43,7 +42,10 @@ export class SocketIOTransport implements ITransport {
 
         const { answer } = this.pending.ask(req.uuid);
         this.socket.emit(this.eventName, req);
-        return answer;
+        return answer.catch(err => ({
+            data: undefined,
+            exception: `${err}`,
+        }));
     }
 
     setRequestHandler(handler: ITransportRequestHandler): void {

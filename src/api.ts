@@ -1,23 +1,20 @@
 import { Config, DefaultConfig } from './config';
 import { ITransport, ITransportRequestHandler } from './transport';
 import { ArgsN } from 'tsargs';
-import { UUIDGenerator } from './utils';
-import { PodJSON } from './types';
+import { UUIDGenerator, simpleCountGenerator } from './utils';
+import { PodJSON, PromisifyFuncReturnType } from './types';
 import { callbacksMiddleware } from './middlewares/callbacks';
 
 export type DefaultMethodMap = { [methodName: string]: (...args: any[]) => any };
 export type ApiDefinition<MethodMap extends DefaultMethodMap> = {
-    [f in keyof MethodMap]: (...args: ArgsN<MethodMap[f]>) =>
-        // if return type is void, return void
-        ReturnType<MethodMap[f]> extends (void|undefined) ? void
-            // otherwise wrap it to promise
-            : ReturnType<MethodMap[f]> extends Promise<any> ? ReturnType<MethodMap[f]> : Promise<ReturnType<MethodMap[f]>>
+    [f in keyof MethodMap]: PromisifyFuncReturnType<MethodMap[f]>
 }
 
 export enum ApiProtocolArgTypeFlag {
     none = 0,
     value = 1,
     callback = 2,
+    proxy = 4,
 
     // [0..16] RESERVED BITS
 
@@ -44,10 +41,16 @@ type ApiProtocolArg_Callback = {
     callback: string,
 };
 
+type ApiProtocolArg_Proxy = {
+    type: ApiProtocolArgTypeFlag.proxy,
+    objId: string|number,
+};
+
 export type ApiProtocolArg =
     ApiProtocolArg_None |
     ApiProtocolArg_Value |
-    ApiProtocolArg_Callback
+    ApiProtocolArg_Callback |
+    ApiProtocolArg_Proxy
 ;
 
 export type ApiProtocol = {
@@ -73,7 +76,7 @@ export class Api<
             config = DefaultConfig,
             debugName = '',
             middlewares = [
-                callbacksMiddleware(),
+                callbacksMiddleware().middleware,
             ],
         } = opts;
         
@@ -92,7 +95,7 @@ export class Api<
 
     debugName: string;
 
-    private handleRemoteCall: ITransportRequestHandler = (v) => {
+    private handleRemoteCall: ITransportRequestHandler = async (v) => {
         const rid = this.requestCounter();
 
         if (this.config.debug) {
@@ -115,13 +118,19 @@ export class Api<
             if (data.method) {
                 if (!this.methods || !this.methods[data.method]) {
                     console.error(`method '${data.method}' not found`);
-                    return;
+                    return {
+                        data: undefined,
+                        exception: `method '${data.method}' not found`,
+                    };
                 }
                 if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found selfMethod data.method="${data.method}"`);
                 func = this.methods[data.method];
             } else {
                 console.error('not method & not callback');
-                return;
+                return {
+                    data: undefined,
+                    exception: 'not method & not callback',
+                };
             }
         }
 
@@ -149,14 +158,23 @@ export class Api<
         });
 
         if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: invoking func`);
-        const returnValue = func(...args);
 
-        this._hook_postHandleRemoteCall(rid);
-
-        const packedResult = this._hook_packReturnValue(returnValue, rid);
-        if (packedResult) return packedResult;
-
-        return returnValue;
+        try {
+            const returnValue = await func(...args);
+    
+            this._hook_postHandleRemoteCall(rid);
+    
+            const packedResult = this._hook_packReturnValue(returnValue, rid);
+    
+            return {
+                data: packedResult || returnValue
+            };
+        } catch (err) {
+            return {
+                data: undefined,
+                exception: `${err}`
+            };
+        }
     }
 
     private _call = async (params: {
@@ -189,9 +207,13 @@ export class Api<
 
         this._hook_postCall(params, rid);
 
-        const unpackedResult = this._hook_unpackReturnValue(result, rid);
-        if (unpackedResult) return unpackedResult;
-        return result;
+        if (result.exception) {
+            throw result.exception;
+        } else {
+            const unpackedResult = this._hook_unpackReturnValue(result.data, rid);
+            if (unpackedResult) return unpackedResult;
+            return result.data;
+        }
     }
 
     /** deprecated, use `call` instead */
@@ -208,16 +230,13 @@ export class Api<
     // TODO: call without callback mechanism, for speedup
     // callNoCallback;
 
-    readonly methods: ApiDefinition<SelfMethodMap>;
+    readonly methods: SelfMethodMap;
     readonly transport: ITransport;
     readonly config: Config;
 
     nextUUID: UUIDGenerator;
 
-    requestCounter: () => number = (() => {
-        let counter = 0;
-        return () => counter++;
-    })();
+    requestCounter: () => number = simpleCountGenerator();
 
     readonly hooks: {
         readonly [hookName in MIDDLEWARE_HOOK_NAME]: Required<ApiMiddleware>[hookName][]
@@ -305,7 +324,7 @@ export class Api<
     };
 
     private _hook_packReturnValue = (originalReturnValue: any, requestId: number): PodJSON|undefined => {
-        if (this.hooks.packReturnValue.length === 0) return;
+        if (this.hooks.packReturnValue.length === 0) return originalReturnValue;
 
         let packedReturn = undefined;
         for (const hook of this.hooks.packReturnValue) {
@@ -316,7 +335,7 @@ export class Api<
     };
 
     private _hook_unpackReturnValue = (originalReturnValue: PodJSON, requestId: number): any|undefined => {
-        if (this.hooks.unpackReturnValue.length === 0) return;
+        if (this.hooks.unpackReturnValue.length === 0) return originalReturnValue;
 
         let unpackedReturn = undefined;
         for (const hook of this.hooks.unpackReturnValue) {
