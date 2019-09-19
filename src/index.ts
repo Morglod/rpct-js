@@ -16,3 +16,4 @@ export * from './hyperuuid';
 export * from './figma';
 export * from './proxy-map-api';
 export * from './middlewares/proxy-obj';
+export * from './watch-prop';
