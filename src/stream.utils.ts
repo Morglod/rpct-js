@@ -1,39 +1,42 @@
 import { Duplex, TransformOptions, Transform } from 'stream';
-import { IStreamDuplex, asDuplexStream } from './stream.types';
+import { IStreamDuplex, asDuplexStream, StreamReadableEvents, IStreamWritable, IStreamReadable, asWritableStream, StreamWritableEvents, asReadableStream } from './stream.types';
+import { EventEmitter } from 'tsee';
 
-/**
- * Works like: src -> dst; dst -> src  
- * eg to emulate remote connection
- */
 export function simpleCrossStream<
-    Chunk = string|Uint8Array,
->(opts: { objectMode?: boolean, highWaterMark?: number } = {}): IStreamDuplex<Chunk, Chunk> {
-    const {
-        objectMode = true,
-        highWaterMark = undefined,
-    } = opts;
-
-    const data = [] as Chunk[];
-
-    const duplex = new Duplex({
-        objectMode,
-        highWaterMark,
-        write(chunk: any, enc: string, cb: Function) {
-            data.push(chunk);
-            if (cb) cb();
-        },
-        read() {
-            if (data.length === 0) {
-                this.push(undefined);
-                return;
-            }
-            const last = data[data.length - 1];
-            data.pop();
-            this.push(last);
+    Chunk,
+>(): {
+    ar: IStreamReadable<Chunk>,
+    aw: IStreamWritable<Chunk>,
+    br: IStreamReadable<Chunk>,
+    bw: IStreamWritable<Chunk>,
+    a: IStreamDuplex<Chunk, Chunk>,
+    b: IStreamDuplex<Chunk, Chunk>,
+} {
+    class VirtualStream<Chunk> extends EventEmitter<StreamReadableEvents<Chunk>> {
+        constructor(public target: VirtualStream<Chunk>) {
+            super();
         }
-    });
 
-    return asDuplexStream(duplex);
+        write(chunk: Chunk, stringEncoding_cb?: string|Function, callback?: Function): boolean {
+            this.target.emit('data', chunk);
+            if (typeof stringEncoding_cb === 'function') stringEncoding_cb();
+            if (typeof callback === 'function') callback();
+            return true;
+        }
+    }
+
+    const a = new VirtualStream(undefined!);
+    const b = new VirtualStream(a);
+    a.target = b;
+
+    return {
+        ar: asReadableStream(a),
+        aw: asWritableStream(a),
+        br: asReadableStream(b),
+        bw: asWritableStream(b),
+        a: asDuplexStream(a),
+        b: asDuplexStream(b),
+    };
 }
 
 /**

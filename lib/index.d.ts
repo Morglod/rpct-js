@@ -1,3 +1,4 @@
+export * from 'tsee';
 export * from './api';
 export * from './config';
 export * from './duplex-json-stream.transport';
@@ -8,7 +9,8 @@ export * from './ticket-list';
 export * from './transport';
 export * from './utils';
 export * from './window.stream';
-export * from 'tsee';
 export * from './stream.utils';
 export * from './hyperuuid';
 export * from './figma';
+export * from './proxy-map-api';
+export * from './middlewares/proxy-obj';

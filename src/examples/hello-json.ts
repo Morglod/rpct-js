@@ -1,6 +1,6 @@
 import { Api } from "../api";
-import { DuplexJsonStreamTransport } from "../duplex-json-stream.transport";
 import { simpleCrossStream } from "../stream.utils";
+import { DuplexStreamTransport } from "../duplex-stream.transport";
 
 function remoteSum(a: number, b: number, cb: (result: number) => void) {
     console.log(`remoteSum(${a}, ${b}, cb)`);
@@ -10,10 +10,10 @@ function remoteSum(a: number, b: number, cb: (result: number) => void) {
 (async function main() {
     const session = simpleCrossStream();
 
-    const localStreamTransport = new DuplexJsonStreamTransport(session, undefined, 'local');
+    const localStreamTransport = new DuplexStreamTransport(session.a, undefined, 'local');
     const localApi = new Api<{ remoteSum: typeof remoteSum }, {}>({}, localStreamTransport);
 
-    const remoteStreamTransport = new DuplexJsonStreamTransport(session, undefined, 'remote');
+    const remoteStreamTransport = new DuplexStreamTransport(session.b, undefined, 'remote');
     const remoteApi = new Api<{}, { remoteSum: typeof remoteSum }>({
         remoteSum,
     }, remoteStreamTransport);
