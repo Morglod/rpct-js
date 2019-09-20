@@ -6,9 +6,6 @@ import { EventEmitter } from 'tsee';
 import { StreamReadableEvents } from '../stream.types';
 import { ITransportProtocol } from '../transport';
 
-export * from '../browser';
-export * from './utils';
-
 export function connectToPlugin<
     PluginMethods extends DefaultMethodMap,
     UIMethods extends DefaultMethodMap,
