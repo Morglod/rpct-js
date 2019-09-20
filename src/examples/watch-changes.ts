@@ -1,9 +1,9 @@
 import { Api } from "../api";
-import { simpleCrossStream } from "../stream.utils";
-import { ITransportProtocol } from "../transport";
-import { proxyMapRemote } from "../proxy-map-api";
-import { DuplexStreamTransport } from "../duplex-stream.transport";
-import { watchProperty } from "../watch-prop";
+import { simpleCrossStream } from "../streams/utils";
+import { ITransportProtocol } from "../transports/itransport";
+import { proxyMapRemote } from "../utils/proxy-map-api";
+import { DuplexStreamTransport } from "../transports/duplex-stream";
+import { watchProperty } from "../utils/watch-prop";
 import { DefaultConfig } from "../config";
 
 const session = simpleCrossStream<ITransportProtocol>();

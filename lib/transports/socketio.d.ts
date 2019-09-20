@@ -1,7 +1,7 @@
 import 'socket.io-client';
-import { Config } from './config';
-import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse } from './transport';
-import { TicketList } from './ticket-list';
+import { Config } from '../config';
+import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse } from '../transports/itransport';
+import { TicketList } from '../utils/ticket-list';
 export declare type SocketIOTransportProtocolHandler = (response: ITransportProtocol) => void;
 export declare type SocketIOSocket = {
     on(eventName: string, handler: (data: any) => void): void;

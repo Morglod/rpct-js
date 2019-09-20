@@ -1,6 +1,7 @@
-import { Duplex, TransformOptions, Transform } from 'stream';
-import { IStreamDuplex, asDuplexStream, StreamReadableEvents, IStreamWritable, IStreamReadable, asWritableStream, StreamWritableEvents, asReadableStream } from './stream.types';
 import { EventEmitter } from 'tsee';
+import { Duplex, TransformOptions, Transform } from 'stream';
+
+import { IStreamDuplex, asDuplexStream, StreamReadableEvents, IStreamWritable, IStreamReadable, asWritableStream, StreamWritableEvents, asReadableStream } from '../streams/istream';
 
 export function simpleCrossStream<
     Chunk,

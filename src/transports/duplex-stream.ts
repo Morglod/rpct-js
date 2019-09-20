@@ -1,7 +1,7 @@
-import { Config, DefaultConfig } from './config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from './transport';
-import { TicketList } from './ticket-list';
-import { IStreamDuplex } from './stream.types';
+import { Config, DefaultConfig } from '../config';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from '../transports/itransport';
+import { TicketList } from '../utils/ticket-list';
+import { IStreamDuplex } from '../streams/istream';
 
 export class DuplexStreamTransport implements ITransport {
     constructor(

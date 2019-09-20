@@ -1,5 +1,5 @@
 import { ApiMiddleware, Api } from "../api";
-import { PlainUUID, PromisifyFuncReturnType } from "../types";
+import { PlainUUID, PromisifyFuncReturnType } from "../utils/types";
 export declare type ProxyApiMethods = {
     $proxy_callField(objId: PlainUUID, path: string, args: any[]): any;
     $proxy_getField(objId: PlainUUID, path: string): any;

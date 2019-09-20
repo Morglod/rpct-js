@@ -1,8 +1,8 @@
 import { Config } from './config';
-import { ITransport } from './transport';
+import { ITransport } from './transports/itransport';
 import { ArgsN } from 'tsargs';
-import { UUIDGenerator } from './utils';
-import { PodJSON, PromisifyFuncReturnType } from './types';
+import { UUIDGenerator } from './utils/utils';
+import { PodJSON, PromisifyFuncReturnType } from './utils/types';
 export declare type DefaultMethodMap = {
     [methodName: string]: (...args: any[]) => any;
 };

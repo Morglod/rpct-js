@@ -1,8 +1,8 @@
 import 'socket.io-client';
 
-import { Config, DefaultConfig } from './config';
-import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse } from './transport';
-import { TicketList } from './ticket-list';
+import { Config, DefaultConfig } from '../config';
+import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse } from '../transports/itransport';
+import { TicketList } from '../utils/ticket-list';
 
 export type SocketIOTransportProtocolHandler = (response: ITransportProtocol) => void;
 

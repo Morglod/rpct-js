@@ -1,4 +1,4 @@
-import { Api, DefaultMethodMap } from './api';
+import { Api, DefaultMethodMap } from '../api';
 import { PromisifyFuncReturnType } from './types';
 export declare type ProxyMapRemoteApi<RemoteMethodMap extends DefaultMethodMap> = {
     [methodName in keyof RemoteMethodMap]: PromisifyFuncReturnType<RemoteMethodMap[methodName]>;

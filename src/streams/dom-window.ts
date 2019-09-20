@@ -1,6 +1,6 @@
-import { IStreamReadable, StreamReadableEvents, IStreamWritable, StreamWritableEvents } from "./stream.types";
+import { IStreamReadable, StreamReadableEvents, IStreamWritable, StreamWritableEvents } from "../streams/istream";
 import * as tsee from 'tsee';
-import { ITransportProtocol } from "./transport";
+import { ITransportProtocol } from "../transports/itransport";
 
 type DefaultWindowStreamData = {
     type: '_$_rpct-window-stream_$_',

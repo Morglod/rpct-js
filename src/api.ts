@@ -1,8 +1,8 @@
 import { Config, DefaultConfig } from './config';
-import { ITransport, ITransportRequestHandler } from './transport';
+import { ITransport, ITransportRequestHandler } from './transports/itransport';
 import { ArgsN } from 'tsargs';
-import { UUIDGenerator, simpleCountGenerator } from './utils';
-import { PodJSON, PromisifyFuncReturnType } from './types';
+import { UUIDGenerator, simpleCountGenerator } from './utils/utils';
+import { PodJSON, PromisifyFuncReturnType } from './utils/types';
 import { callbacksMiddleware } from './middlewares/callbacks';
 
 export type DefaultMethodMap = { [methodName: string]: (...args: any[]) => any };

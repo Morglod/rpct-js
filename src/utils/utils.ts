@@ -1,4 +1,4 @@
-import { PodJSON, PlainUUID } from "./types";
+import { PodJSON, PlainUUID } from './types';
 
 export function cloneJSON<T extends PodJSON>(x: T): T {
     return JSON.parse(JSON.stringify(x));

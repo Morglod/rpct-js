@@ -3,8 +3,8 @@ import * as path from 'path';
 const jsonStream = require('duplex-json-stream');
 
 import { Api } from "../api";
-import { DuplexJsonStreamTransport } from "../duplex-json-stream.transport";
-import { asDuplexStream } from "../stream.types";
+import { DuplexJsonStreamTransport } from "../transports/duplex-json-stream";
+import { asDuplexStream } from "../streams/istream";
 
 function remoteSum(a: number, b: number, cb: (result: number) => void) {
     console.log(`remoteSum(${a}, ${b}, cb)`);

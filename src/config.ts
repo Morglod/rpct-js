@@ -1,4 +1,4 @@
-import { UUIDGeneratorFactory, unsafeUUIDGenerator } from "./utils";
+import { UUIDGeneratorFactory, unsafeUUIDGenerator } from "./utils/utils";
 
 export type Config = {
     version: string,

@@ -1,7 +1,7 @@
-import { Config } from './config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from './transport';
-import { TicketList } from './ticket-list';
-import { IStreamReadable, IStreamWritable, StreamReadableLike, StreamWritableLike } from './stream.types';
+import { Config } from '../config';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from '../transports/itransport';
+import { TicketList } from '../utils/ticket-list';
+import { IStreamReadable, IStreamWritable, StreamReadableLike, StreamWritableLike } from '../streams/istream';
 export declare class StreamTransport implements ITransport {
     debugName: string;
     constructor(rstream: StreamReadableLike<ITransportProtocol>, wstream: StreamWritableLike<ITransportProtocol>, config?: Config, debugName?: string);

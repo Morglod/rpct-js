@@ -1,9 +1,9 @@
-import { DuplexJsonStreamTransport } from "../duplex-json-stream.transport";
-import { asDuplexStream } from "../stream.types";
+import { DuplexJsonStreamTransport } from "../transports/duplex-json-stream";
+import { asDuplexStream } from "../streams/istream";
 
 import * as net from 'net';
 import { messagePackTransforms } from "./message-pack-transform";
-import { StreamTransport } from "../stream.transport";
+import { StreamTransport } from "../transports/stream";
 const jsonStream = require('duplex-json-stream');
 
 export async function connectToJsonSocket(socketPath: string): Promise<DuplexJsonStreamTransport> {

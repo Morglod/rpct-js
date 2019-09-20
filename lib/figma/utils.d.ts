@@ -1,5 +1,5 @@
 import { EventEmitter } from 'tsee';
-import { StreamWritableEvents } from '../stream.types';
+import { StreamWritableEvents } from '../streams/istream';
 export declare class FigmaPluginWriteStream<ITransportProtocol> extends EventEmitter<StreamWritableEvents> {
     readonly figma: {
         ui: {

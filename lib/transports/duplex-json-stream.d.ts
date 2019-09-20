@@ -1,7 +1,7 @@
-import { Config } from './config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from './transport';
-import { TicketList } from './ticket-list';
-import { IStreamDuplex } from './stream.types';
+import { Config } from '../config';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from '../transports/itransport';
+import { TicketList } from '../utils/ticket-list';
+import { IStreamDuplex } from '../streams/istream';
 export declare class DuplexJsonStreamTransport implements ITransport {
     debugName: string;
     constructor(stream: IStreamDuplex, config?: Config, debugName?: string);

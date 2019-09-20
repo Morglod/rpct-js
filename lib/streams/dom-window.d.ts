@@ -1,6 +1,6 @@
-import { IStreamReadable, IStreamWritable, StreamWritableEvents } from "./stream.types";
+import { IStreamReadable, IStreamWritable, StreamWritableEvents } from "../streams/istream";
 import * as tsee from 'tsee';
-import { ITransportProtocol } from "./transport";
+import { ITransportProtocol } from "../transports/itransport";
 export declare const WINDOW_STREAM_DATA_FAIL: unique symbol;
 export declare type WINDOW_STREAM_DATA_FAIL = typeof WINDOW_STREAM_DATA_FAIL;
 /** returns message's payload or WINDOW_STREAM_DATA_FAIL if it's not this protocol message */

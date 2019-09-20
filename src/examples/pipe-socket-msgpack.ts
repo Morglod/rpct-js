@@ -2,7 +2,7 @@ import * as net from 'net';
 import * as path from 'path';
 
 import { Api } from "../api";
-import { StreamTransport } from "../stream.transport";
+import { StreamTransport } from "../transports/stream";
 import { messagePackTransforms } from './message-pack-transform';
 
 const WINDOWS = 0;

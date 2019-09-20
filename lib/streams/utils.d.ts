@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { TransformOptions, Transform } from 'stream';
-import { IStreamDuplex, IStreamWritable, IStreamReadable } from './stream.types';
+import { IStreamDuplex, IStreamWritable, IStreamReadable } from '../streams/istream';
 export declare function simpleCrossStream<Chunk>(): {
     ar: IStreamReadable<Chunk>;
     aw: IStreamWritable<Chunk>;

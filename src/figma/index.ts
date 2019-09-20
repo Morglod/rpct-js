@@ -1,10 +1,12 @@
-import { DefaultMethodMap, Api } from '../api';
-import { StreamTransport } from '../stream.transport';
-import { createWindowReadStream, createWindowWriteStream } from '../window.stream';
-import { FigmaPluginWriteStream } from './utils';
 import { EventEmitter } from 'tsee';
-import { StreamReadableEvents } from '../stream.types';
-import { ITransportProtocol } from '../transport';
+
+import { DefaultMethodMap, Api } from '../api';
+import { StreamTransport } from '../transports/stream';
+import { createWindowReadStream, createWindowWriteStream } from '../streams/dom-window';
+import { StreamReadableEvents } from '../streams/istream';
+import { ITransportProtocol } from '../transports/itransport';
+
+import { FigmaPluginWriteStream } from './utils';
 
 export function connectToPlugin<
     PluginMethods extends DefaultMethodMap,

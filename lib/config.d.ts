@@ -1,4 +1,4 @@
-import { UUIDGeneratorFactory } from "./utils";
+import { UUIDGeneratorFactory } from "./utils/utils";
 export declare type Config = {
     version: string;
     debug: boolean;

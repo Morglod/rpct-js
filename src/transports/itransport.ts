@@ -1,5 +1,5 @@
-import { Config } from "./config";
-import { PodJSON, PlainUUID } from "./types";
+import { Config } from "../config";
+import { PodJSON, PlainUUID } from "../utils/types";
 
 /** any serializable JSON type */
 export type ITransportData = PodJSON;

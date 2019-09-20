@@ -1,5 +1,5 @@
-import { Config } from "./config";
-import { PodJSON, PlainUUID } from "./types";
+import { Config } from "../config";
+import { PodJSON, PlainUUID } from "../utils/types";
 /** any serializable JSON type */
 export declare type ITransportData = PodJSON;
 export declare type ITransportRequestHandler = (data: ITransportData) => Promise<ITransportResponse>;

@@ -1,5 +1,5 @@
-import { DuplexJsonStreamTransport } from "../duplex-json-stream.transport";
-import { StreamTransport } from "../stream.transport";
+import { DuplexJsonStreamTransport } from "../transports/duplex-json-stream";
+import { StreamTransport } from "../transports/stream";
 export declare function connectToJsonSocket(socketPath: string): Promise<DuplexJsonStreamTransport>;
 export declare function createJsonSocketServer(socketPath: string, onConnection: (transport: DuplexJsonStreamTransport) => void): Promise<unknown>;
 export declare function connectToMsgPackSocket(socketPath: string): Promise<StreamTransport>;
