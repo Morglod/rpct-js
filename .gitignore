@@ -1,2 +1,4 @@
 /node_modules
 /browser/rpct.js
+/coverage
+/lib/__tests__
