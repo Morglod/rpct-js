@@ -7,9 +7,9 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc && npm run-script build-browser && npm run-script build-browser-min && npm run-script build-figma-min",
-    "build-browser": "browserify lib/browser.js --standalone RPCT -o browser/rpct.js",
-    "build-browser-min": "browserify -p tinyify lib/browser.js --standalone RPCT -o browser/rpct.min.js",
-    "build-figma-min": "browserify -p tinyify lib/figma.browser.js --standalone RPCT -o browser/figma.min.js",
+    "build-browser": "browserify lib/bundles/browser.js --standalone RPCT -o browser/rpct.js",
+    "build-browser-min": "browserify -p tinyify lib/bundles/browser.js --standalone RPCT -o browser/rpct.min.js",
+    "build-figma-min": "browserify -p tinyify lib/bundles/figma.js --standalone RPCT -o browser/figma.min.js",
     "test": "jest"
   },
   "keywords": [
