@@ -12,7 +12,7 @@ It can emit message and send to remote api to invoke remote method.
 It can pass callbacks as arguments.  
 It raises up remote exceptions.  
 
-Api can be easily extended with [middlewares & hooks]('./src/middlewares).
+Api can be easily extended with [middlewares & hooks](./src/middlewares).
 
 Transport operates with data serialization and deserialization. It resend messages over any session to remote connected Transport.
 

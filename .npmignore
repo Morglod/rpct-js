@@ -1,0 +1,6 @@
+/lib/__tests__
+/src/__tests__
+/jest.config.jest
+/.vscode
+/coverage
+/node_modules

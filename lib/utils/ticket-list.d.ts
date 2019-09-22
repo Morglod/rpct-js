@@ -23,7 +23,6 @@ export declare class TicketList<AnswerT> {
     hasUUID: (uuid: string | number) => boolean;
     rejectTicket: (uuid: string | number, ignoreErrors?: false | "ignore errors") => void;
     /**
-     * You should use uuidv4+ for heavy rpc services
      * Now it will reset on Number.MAX_SAFE_INTEGER and travel pendingTickets keys till found free uuid
      */
     nextUUID: (() => TicketListUUID);

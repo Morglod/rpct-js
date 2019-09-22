@@ -31,4 +31,6 @@ it('main', async () => {
     );
 
     console.log('result', result);
+
+    expect(result).toBe('hello world!');
 });

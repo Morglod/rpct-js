@@ -7,8 +7,8 @@ export function cloneJSON<T extends PodJSON>(x: T): T {
 export type UUIDGenerator = (() => PlainUUID);
 export type UUIDGeneratorFactory = () => UUIDGenerator;
 
-export function simpleCountGenerator(): () => number {
-    let counter = 0;
+export function simpleCountGenerator(initial: number = 0): () => number {
+    let counter = initial;
 
     return () => {
         if (counter >= Number.MAX_SAFE_INTEGER - 5) {
