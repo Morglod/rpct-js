@@ -93,7 +93,7 @@ uiApi = connectToUI<PluginMethods, UIMethods>(figma, {
 
 You can use minified version from CDN (global `RPCT` object):
 ```html
-<script src="https://unpkg.com/rpct/browser/figma.min.js"></script>
+<script src="https://unpkg.com/rpct/browser/rpct.min.js"></script>
 ```
 
 ## Window-Frame Example

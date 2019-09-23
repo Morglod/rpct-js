@@ -9,3 +9,5 @@ export * from '../utils/utils';
 export * from '../streams/dom-window';
 export * from '../streams/istream';
 export * from '../utils/proxy-map-api';
+export * from '../figma/utils';
+export * from '../figma/index';

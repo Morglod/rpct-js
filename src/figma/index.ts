@@ -8,10 +8,10 @@ import { ITransportProtocol } from '../transports/itransport';
 
 import { FigmaPluginWriteStream } from './utils';
 
-export function connectToPlugin<
+export async function connectToPlugin<
     PluginMethods extends DefaultMethodMap,
     UIMethods extends DefaultMethodMap,
->(uiMethods: UIMethods) {
+>(uiMethods: UIMethods): Promise<Api<PluginMethods, UIMethods>> {
     const rstream = createWindowReadStream(window, {
         unpack: evt => (evt.data).pluginMessage,
     }).stream;
@@ -27,11 +27,23 @@ export function connectToPlugin<
         'plugin ui'
     );
 
-    // connected api
-    return new Api<PluginMethods, UIMethods>(uiMethods, streamTransport);
+    const api = new Api<PluginMethods, UIMethods>(Object.assign(uiMethods, {
+
+    }), streamTransport);
+
+    return new Promise(async resolve => {
+        let connecting = true;
+        while(connecting) {
+            (api.call as any)('$connectToUI_handshake', () => {
+                connecting = false;
+                resolve(api);
+            });
+            await new Promise(r => setTimeout(r, 200));
+        }
+    });
 }
 
-export function connectToUI<
+export async function connectToUI<
     PluginMethods extends DefaultMethodMap,
     UIMethods extends DefaultMethodMap,
 >(
@@ -40,7 +52,7 @@ export function connectToUI<
         onmessage?(pluginMessage: any, props: any): void,
     }},
     pluginMethods: PluginMethods,
-) {
+): Promise<Api<UIMethods, PluginMethods>> {
     const wstream = new FigmaPluginWriteStream(figma);
     const rstream = new EventEmitter<StreamReadableEvents<ITransportProtocol>>();
 
@@ -50,5 +62,15 @@ export function connectToUI<
 
     const streamTransport = new StreamTransport(rstream, wstream, undefined, 'plugin back');
 
-    return new Api<UIMethods, PluginMethods>(pluginMethods, streamTransport);
+    return new Promise(resolve => {
+        let isConnected = false;
+        const api = new Api<UIMethods, PluginMethods>(Object.assign(pluginMethods, {
+            $connectToUI_handshake(connected: Function) {
+                if (isConnected) return;
+                isConnected = true;
+                connected();
+                resolve(api);
+            }
+        }), streamTransport);
+    });
 }
