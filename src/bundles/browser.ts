@@ -1,3 +1,5 @@
+export * from 'tsee';
+
 export * from '../api';
 export * from '../config';
 export * from '../transports/duplex-json-stream';
@@ -8,4 +10,4 @@ export * from '../transports/itransport';
 export * from '../utils/utils';
 export * from '../streams/dom-window';
 export * from '../streams/istream';
-export * from 'tsee';
+export * from '../utils/proxy-map-api';
