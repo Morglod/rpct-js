@@ -1,10 +1,10 @@
 {
   "name": "rpct",
-  "version": "0.3.2",
+  "version": "0.3.4",
   "description": "rpc toolkit",
   "browser": "browser/rpct.min.js",
   "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "types": "lib/bundles/browser.d.ts",
   "scripts": {
     "build": "tsc && npm run-script build-browser-min",
     "build-browser-min": "browserify -p tinyify lib/bundles/browser.js --standalone RPCT -o browser/rpct.min.js",
