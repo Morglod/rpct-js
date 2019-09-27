@@ -1,4 +1,30 @@
 import { ApiMiddleware, Api, ApiProtocolArgTypeFlag } from "../api";
+import { setObjectOptions, getObjectOptions } from "../utils/object-options";
+
+export const CALLBACK_OPTIONS_SYMBOL = Symbol('callback options');
+
+export type CallbackOptions = {
+    /** bind remote callback forever, use `middleware.freeCallback` to dispose it */
+    noAutoFree?: boolean,
+};
+
+export const defaultCallbackOptions = <T extends (...args: any) => any>(func: T): CallbackOptions => ({
+    noAutoFree: false,
+});
+
+export const appendCallbackOptions = <T extends (...args: any) => any>(func: T, opts: CallbackOptions): T => {
+    return setObjectOptions(func, CALLBACK_OPTIONS_SYMBOL, {
+        ...getObjectOptions(func, CALLBACK_OPTIONS_SYMBOL, defaultCallbackOptions),
+        ...opts,
+    });
+};
+
+/** bind remote callback forever, use `middleware.freeCallback` to dispose it */
+export const bindCallback = <T extends (...args: any) => any>(func: T): T => {
+    return appendCallbackOptions(func, {
+        noAutoFree: true
+    });
+};
 
 export const callbacksMiddleware = () => {
     const callBoundCallbacks: {
@@ -12,6 +38,14 @@ export const callbacksMiddleware = () => {
 
     let api: Api<any, any>;
 
+    const autoFreeCallback = (map: typeof callbacks, uuid: string) => {
+        const opts = getObjectOptions<CallbackOptions|undefined, Function>(map[uuid], CALLBACK_OPTIONS_SYMBOL, undefined);
+        if (opts && opts.noAutoFree) {
+            return;
+        }
+        delete map[uuid];
+    };
+
     const middleware: ApiMiddleware = {
         install(api_) {
             api = api_;
@@ -20,7 +54,7 @@ export const callbacksMiddleware = () => {
         postCall(params, rid) {
             if (callBoundCallbacks[rid]) {
                 for (const cbUUID of callBoundCallbacks[rid]) {
-                    delete callbacks[cbUUID];
+                    autoFreeCallback(callbacks, cbUUID);
                 }
                 delete callBoundCallbacks[rid];
             }

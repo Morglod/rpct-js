@@ -15,3 +15,5 @@ export * from '../utils/watch-prop';
 
 export * from '../figma/utils';
 export * from '../figma/index';
+
+export * from '../middlewares/callbacks';

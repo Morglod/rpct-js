@@ -12,6 +12,8 @@ It can emit message and send to remote api to invoke remote method.
 It can pass callbacks as arguments.  
 It raises up remote exceptions.  
 
+Fully TypeScript'ed.
+
 Api can be easily extended with [middlewares & hooks](./src/middlewares).
 
 Transport operates with data serialization and deserialization. It resend messages over any session to remote connected Transport.
@@ -19,6 +21,33 @@ Transport operates with data serialization and deserialization. It resend messag
 Browser minified sizes:  
 * 17kb (without compression)
 * 4kb (gzipped)
+
+#### Example
+
+Local:
+```ts
+let counter = 0;
+setInterval(() => counter++, 1000);
+
+function listenCounter(onChange) {
+    watchProperty(() => counter).on('change', onChange);
+}
+
+// ...
+
+new Api({
+    listenCounter,
+}, transport);
+```
+
+Remote:
+```ts
+// ...
+
+api.listenCounter(bindCallback(counter => {
+    console.log('counter', counter);
+}));
+```
 
 ## Some stats
 
@@ -32,8 +61,6 @@ json stream with callbacks:
 
 ## Usage
 
-RPCT is writed fully on TypeScript.
-
 Install from npm:
 ```
 npm i rpct
@@ -42,6 +69,11 @@ npm i rpct
 Pick browser minified version and use global `RPCT` object:
 ```html
 <script src="https://unpkg.com/rpct/browser/rpct.min.js"></script>
+```
+
+Or import browser, lightweight version for bundling:
+```ts
+import * as rpct from 'rpct/browser';
 ```
 
 [check out browser examples](./browser)
@@ -111,7 +143,7 @@ var streamTransport = new RPCT.StreamTransport(
 );
 var api = new RPCT.Api({}, streamTransport);
 
-api.callMethod(
+api.call(
     'sum',    // Remote api method
     10,             // argument `a`
     20,             // argument `b`
@@ -140,7 +172,7 @@ var remoteApi = new RPCT.Api({
 ## Watch remote counter?
 
 In this code we call server's `listenCounter` method, pass client's callback for `onChange` event.  
-Then untill promise in `listenCounter` will be resolved, client will print `counter 0, 1, 2, 3...`.
+Then client will print `counter 0, 1, 2, 3...`.
 
 This is [fully working example](./src/examples/watch-changes.ts).
 
@@ -160,9 +192,7 @@ type ApiSchema = {
     setInterval(() => counter++, 1000);
 
     function listenCounter(onChange: (x: number) => void) {
-        return new Promise(resolve => {
-            watchProperty(() => counter).on('change', onChange);
-        });
+        watchProperty(() => counter).on('change', onChange);
     }
 
     const remoteStreamTransport = new DuplexStreamTransport(session.a, undefined, 'remote');
@@ -176,9 +206,9 @@ type ApiSchema = {
     const localApi = new Api<ApiSchema, {}>({}, localStreamTransport);
     const api = proxyMapRemote(localApi);
 
-    api.listenCounter(counter => {
+    api.listenCounter(bindCallback(counter => {
         console.log('counter', counter);
-    });
+    }));
 })();
 
 ```
