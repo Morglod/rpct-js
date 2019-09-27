@@ -15,6 +15,7 @@ export enum ApiProtocolArgTypeFlag {
     value = 1,
     callback = 2,
     proxy = 4,
+    buffer = 5,
 
     // [0..16] RESERVED BITS
 
@@ -46,15 +47,26 @@ type ApiProtocolArg_Proxy = {
     objId: string|number,
 };
 
+type ApiProtocolArg_Buffer = {
+    type: ApiProtocolArgTypeFlag.buffer,
+    /** data in base64 */
+    data64: string,
+};
+
 export type ApiProtocolArg =
     ApiProtocolArg_None |
     ApiProtocolArg_Value |
     ApiProtocolArg_Callback |
-    ApiProtocolArg_Proxy
+    ApiProtocolArg_Proxy |
+    ApiProtocolArg_Buffer
 ;
+
+export type ApiProtocolReturnType = ApiProtocolArg;
+export type ApiProtocolValue = ApiProtocolArg;
 
 export type ApiProtocol = {
     method?: string,
+    /** [callback middleware]'s option */
     callback?: string,
     args: ApiProtocolArg[]
 };
@@ -101,7 +113,7 @@ export class Api<
         if (this.config.debug) {
             console.log(`Api_${this.debugName} handleRemoteCall: "${JSON.stringify(v)}" rid=${rid}`);
         }
-        const data = v as ApiProtocol;
+        const data = v;
         let func: Function;
 
         if (!data) throw new Error('Api: handleRemoteCall failed, undefined data');
@@ -126,10 +138,10 @@ export class Api<
                 if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: found selfMethod data.method="${data.method}"`);
                 func = this.methods[data.method];
             } else {
-                console.error('not method & not callback');
+                console.error('no method field, checkout middlewares, protocol=' + JSON.stringify(data));
                 return {
                     data: undefined,
-                    exception: 'not method & not callback',
+                    exception: 'no method field, checkout middlewares',
                 };
             }
         }
@@ -138,17 +150,6 @@ export class Api<
         const args = data.args.map((arg, argI) => {
             const unpacked = this._hook_unpackArg(arg, argI, rid);
             if (unpacked) return unpacked;
-
-            if (arg.type === ApiProtocolArgTypeFlag.callback) {
-                if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: callback at ${argI} arg index, returning proxy`);
-                return (...callbackArgs: any[]) => {
-                    if (this.config.debug) console.log(`Api_${this.debugName} handleRemoteCall: proxy call for ${argI} arg index, callbackArgs="${JSON.stringify(callbackArgs)}", callback="${arg.callback}"`);
-                    return this._call({
-                        callback: arg.callback,
-                        args: callbackArgs,
-                    });
-                };
-            }
 
             if (arg.type === ApiProtocolArgTypeFlag.value) {
                 return arg.value;
@@ -167,17 +168,19 @@ export class Api<
             const packedResult = this._hook_packReturnValue(returnValue, rid);
     
             return {
-                data: packedResult || returnValue
+                return: packedResult || {
+                    type: ApiProtocolArgTypeFlag.value,
+                    value: returnValue,
+                }
             };
         } catch (err) {
             return {
-                data: undefined,
                 exception: `${err}`
             };
         }
     }
 
-    private _call = async (params: {
+    readonly _send = async (params: {
         method?: string,
         callback?: string,
         args: any[]
@@ -207,12 +210,17 @@ export class Api<
 
         this._hook_postCall(params, rid);
 
-        if (result.exception) {
+        if ('exception' in result) {
             throw result.exception;
         } else {
-            const unpackedResult = this._hook_unpackReturnValue(result.data, rid);
+            const unpackedResult = this._hook_unpackReturnValue(result.return, rid);
             if (unpackedResult) return unpackedResult;
-            return result.data;
+            if (result.return.type === ApiProtocolArgTypeFlag.value) {
+                return result.return.value;
+            } else {
+                console.warn('unknown data return type, checkout middlewares');
+                return undefined;
+            }
         }
     }
 
@@ -220,15 +228,14 @@ export class Api<
     readonly callMethod = <Method extends keyof RemoteMethodMap>(
         method: Method,
         ...args: ArgsN<RemoteMethodMap[Method]>
-    ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._call({ method: method as any, args }) as any;
+    ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._send({ method: method as any, args }) as any;
 
     readonly call = <Method extends keyof RemoteMethodMap>(
         method: Method,
         ...args: ArgsN<RemoteMethodMap[Method]>
-    ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._call({ method: method as any, args }) as any;
+    ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._send({ method: method as any, args }) as any;
 
-    // TODO: call without callback mechanism, for speedup
-    // callNoCallback;
+    // TODO: call without middlewares mechanism, for speedup
 
     readonly methods: SelfMethodMap;
     readonly transport: ITransport;
@@ -249,7 +256,6 @@ export class Api<
     private _hook_call = (
         params: {
             method?: string,
-            callback?: string,
             args: any[]
         },
         requestId: number,
@@ -271,7 +277,6 @@ export class Api<
     private _hook_postCall = (
         params: {
             method?: string,
-            callback?: string,
             args: any[]
         },
         requestId: number,
@@ -323,7 +328,7 @@ export class Api<
         return unpackedArg;
     };
 
-    private _hook_packReturnValue = (originalReturnValue: any, requestId: number): PodJSON|undefined => {
+    private _hook_packReturnValue = (originalReturnValue: any, requestId: number): ApiProtocolReturnType|undefined => {
         if (this.hooks.packReturnValue.length === 0) return originalReturnValue;
 
         let packedReturn = undefined;
@@ -334,7 +339,7 @@ export class Api<
         return packedReturn;
     };
 
-    private _hook_unpackReturnValue = (originalReturnValue: PodJSON, requestId: number): any|undefined => {
+    private _hook_unpackReturnValue = (originalReturnValue: ApiProtocolReturnType, requestId: number): any|undefined => {
         if (this.hooks.unpackReturnValue.length === 0) return originalReturnValue;
 
         let unpackedReturn = undefined;
@@ -386,12 +391,10 @@ export type ApiMiddleware<
     call?(
         params: {
             method?: string,
-            callback?: string,
             args: any[]
         },
         originalParams: {
             method?: string,
-            callback?: string,
             args: any[]
         },
         requestId: number,
@@ -400,7 +403,6 @@ export type ApiMiddleware<
     postCall?(
         params: {
             method?: string,
-            callback?: string,
             args: any[]
         },
         requestId: number
@@ -418,8 +420,8 @@ export type ApiMiddleware<
     unpackArg?(unpackedArg: any|undefined, originalArg: ApiProtocolArg, argIndex: number, requestId: number): any;
 
     /** pack returning value after call handling */
-    packReturnValue?(packedReturnValue: PodJSON|undefined, originalReturnValue: any, requestId: number): PodJSON|undefined;
+    packReturnValue?(packedReturnValue: PodJSON|undefined, originalReturnValue: any, requestId: number): ApiProtocolReturnType|undefined;
 
     /** unpack returned value after call */
-    unpackReturnValue?(unpackedReturnValue: any|undefined, originalReturnValue: PodJSON, requestId: number): any;
+    unpackReturnValue?(unpackedReturnValue: any|undefined, originalReturnValue: ApiProtocolReturnType, requestId: number): any;
 };

@@ -1,7 +1,8 @@
 import { Config, DefaultConfig } from '../config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from '../transports/itransport';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse, ITransportProtocolReturnable, isTransportProtocolReturnable, isTransportProtocolApi } from '../transports/itransport';
 import { TicketList } from '../utils/ticket-list';
 import { IStreamReadable, IStreamWritable, StreamReadableLike, asReadableStream, asWritableStream, StreamWritableLike } from '../streams/istream';
+import { ApiProtocolArgTypeFlag } from '../api';
 
 export class StreamTransport implements ITransport {
     constructor(
@@ -27,14 +28,23 @@ export class StreamTransport implements ITransport {
 
             if (this.pending.hasUUID(msg.uuid)) {
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: found pending, answering pending ticket uuid="${msg.uuid}"`);
-                this.pending.answer(msg.uuid, msg, 'no uuid check');
+                if (isTransportProtocolReturnable(msg)) {
+                    this.pending.answer(msg.uuid, msg, 'no uuid check');
+                } else {
+                    throw new Error(`StreamIOTransport_${debugName}: msg should be returnable`);
+                }
             } else {
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: no pending ticket with this uuid="${msg.uuid}", calling requestHandler`);
-                const resp = await this.requestHandler(msg.data)
-                if (this.config.debug) console.log(`StreamIOTransport_${debugName}: requestHandler for uuid="${msg.uuid}", answered data: "${JSON.stringify(resp)}"`);
-                this.wstream.write(Object.assign(resp, {
-                    uuid: msg.uuid,
-                }));
+                
+                if (isTransportProtocolApi(msg)) {
+                    const resp = await this.requestHandler(msg.api);
+                    if (this.config.debug) console.log(`StreamIOTransport_${debugName}: requestHandler for uuid="${msg.uuid}", answered data: "${JSON.stringify(resp)}"`);
+                    this.wstream.write(Object.assign(resp, {
+                        uuid: msg.uuid,
+                    }));
+                } else {
+                    throw new Error(`StreamIOTransport_${debugName}: msg should has api`);
+                }
             }
         });
     }
@@ -44,15 +54,15 @@ export class StreamTransport implements ITransport {
         
         const req: ITransportProtocol = {
             uuid,
-            data,
+            api: data,
         };
 
         if (this.config.debug) console.log(`StreamIOTransport_${this.debugName}: making request with uuid="${uuid}", data="${JSON.stringify(data)}", new pending ticket`);
 
         const { answer } = this.pending.ask(req.uuid);
         this.wstream.write(req);
+
         return answer.catch(err => ({
-            data: undefined,
             exception: `${err}`,
         }));
     }
@@ -75,5 +85,5 @@ export class StreamTransport implements ITransport {
 
     private requestHandler!: ITransportRequestHandler;
     config: Readonly<Config> = DefaultConfig;
-    pending = new TicketList<ITransportProtocol>();
+    pending = new TicketList<ITransportResponse>();
 }

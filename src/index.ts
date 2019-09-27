@@ -8,6 +8,7 @@ export * from './figma/utils';
 
 export * from './middlewares/callbacks';
 export * from './middlewares/proxy-obj';
+export * from './middlewares/buffers';
 
 export * from './streams/dom-window';
 export * from './streams/istream';

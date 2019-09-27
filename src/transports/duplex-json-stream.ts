@@ -1,7 +1,8 @@
 import { Config, DefaultConfig } from '../config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from '../transports/itransport';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse, isTransportProtocolReturnable } from '../transports/itransport';
 import { TicketList } from '../utils/ticket-list';
 import { IStreamDuplex } from '../streams/istream';
+import { ApiProtocolArgTypeFlag, ApiProtocol } from '../api';
 
 export class DuplexJsonStreamTransport implements ITransport {
     constructor(stream: IStreamDuplex, config: Config = DefaultConfig, public debugName: string = '') {
@@ -24,28 +25,36 @@ export class DuplexJsonStreamTransport implements ITransport {
                 console.log(`StreamIOTransport_${debugName} received message: "${jsonStr}"`);
             }
 
-            let msg: ITransportProtocol = chunk as any;
+            let chunkProtocol = chunk as any as ITransportProtocol;
 
             try {
-                if (typeof jsonStr === 'string') msg = JSON.parse(jsonStr) as ITransportProtocol;
+                if (typeof jsonStr === 'string') chunkProtocol = JSON.parse(jsonStr) as ITransportProtocol;
             } catch (err) {
                 throw err;
             }
 
-            if (typeof msg !== 'object') throw new Error(`StreamIOTransport_${debugName} wrong message type; should be object`);
-            const k = Object.keys(msg);
+            if (typeof chunkProtocol !== 'object') throw new Error(`StreamIOTransport_${debugName} wrong message type; should be object`);
+            const k = Object.keys(chunkProtocol);
             // if (!k.includes('data')) throw new Error(`StreamIOTransport_${debugName} wrong message type`);
             if (!k.includes('uuid')) throw new Error(`StreamIOTransport_${debugName} wrong message type; should have uuid`);
 
-            if (this.pending.hasUUID(msg.uuid)) {
-                if (this.config.debug) console.log(`StreamIOTransport_${debugName}: found pending`, msg.uuid);
-                this.pending.answer(msg.uuid, msg, 'no uuid check');
+            if (this.pending.hasUUID(chunkProtocol.uuid)) {
+                if (this.config.debug) console.log(`StreamIOTransport_${debugName}: found pending`, chunkProtocol.uuid);
+                if (isTransportProtocolReturnable(chunkProtocol)) {
+                    this.pending.answer(chunkProtocol.uuid, chunkProtocol, 'no uuid check');
+                } else {
+                    throw new Error(`StreamIOTransport_${debugName}: msg should be returnable`);
+                }
             } else {
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: forEach requestHandler`);
-                const resp = await this.requestHandler(msg.data);
-                this.stream.write(JSON.stringify(Object.assign(resp, {
-                    uuid: msg.uuid,
-                })));
+                if ('api' in chunkProtocol) {
+                    const resp = await this.requestHandler(chunkProtocol.api);
+                    this.stream.write(JSON.stringify(Object.assign(resp, {
+                        uuid: chunkProtocol.uuid,
+                    })));
+                } else {
+                    throw new Error(`StreamIOTransport_${debugName}: chunkProtocol without .api`);
+                }
             }
         });
     }
@@ -55,7 +64,7 @@ export class DuplexJsonStreamTransport implements ITransport {
         
         const req: ITransportProtocol = {
             uuid,
-            data,
+            api: data,
         };
 
         if (this.config.debug) console.log(`StreamIOTransport_${this.debugName}: making request`, data);
@@ -85,5 +94,5 @@ export class DuplexJsonStreamTransport implements ITransport {
     readonly stream: IStreamDuplex;
     config: Readonly<Config> = DefaultConfig;
 
-    pending = new TicketList<ITransportProtocol>();
+    pending = new TicketList<ITransportResponse>();
 }

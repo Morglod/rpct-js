@@ -1,4 +1,4 @@
-import { ApiMiddleware, Api, ApiProtocolArgTypeFlag } from "../api";
+import { ApiMiddleware, Api, ApiProtocolArgTypeFlag, ApiProtocolArg } from "../api";
 import { UUIDGenerator } from "../utils/utils";
 import { PlainUUID, PromisifyFuncReturnType } from "../utils/types";
 
@@ -68,6 +68,25 @@ export const proxyObjMiddleware = () => {
         }
     };
 
+    const pack = (arg: any, argI: number, rid: number) => {
+        if (typeof arg === 'object' && 'PROXY_OBJ_MARKER' in arg && arg['PROXY_OBJ_MARKER'] === PROXY_OBJ_MARKER) {
+            if (api.config.debug) console.log(`Api_${api.debugName} packArg proxified argI=${argI}`);
+            return {
+                type: ApiProtocolArgTypeFlag.proxy,
+                objId: arg.objId,
+            } as const;
+        }
+        return undefined;
+    };
+
+    const unpack = (arg: ApiProtocolArg, argI: number, rid: number) => {
+        if (arg.type === ApiProtocolArgTypeFlag.proxy) {
+            if (api.config.debug) console.log(`Api_${api.debugName} unpackArg connecting proxy`);
+            const { objId } = arg;
+            return connectToRemoteProxyObj(objId, '', x);
+        }
+    };
+
     const middleware: ApiMiddleware = {
         install(api_) {
             api = api_;
@@ -83,22 +102,19 @@ export const proxyObjMiddleware = () => {
         },
     
         packArg(_, origArg, argI, rid) {
-            if (typeof origArg === 'object' && 'PROXY_OBJ_MARKER' in origArg && origArg['PROXY_OBJ_MARKER'] === PROXY_OBJ_MARKER) {
-                if (api.config.debug) console.log(`Api_${api.debugName} packArg proxified argI=${argI}`);
-                return {
-                    type: ApiProtocolArgTypeFlag.proxy,
-                    objId: origArg.objId,
-                };
-            }
-            return undefined;
+            return pack(origArg, argI, rid);
         },
     
-        unpackArg(_, originalArg) {
-            if (originalArg.type === ApiProtocolArgTypeFlag.proxy) {
-                if (api.config.debug) console.log(`Api_${api.debugName} unpackArg connecting proxy`);
-                const { objId } = originalArg;
-                return connectToRemoteProxyObj(objId, '', x);
-            }
+        unpackArg(_, originalArg, argI, rid) {
+            return unpack(originalArg, argI, rid);
+        },
+
+        packReturnValue(_, origArg, rid) {
+            return pack(origArg, -1, rid);
+        },
+    
+        unpackReturnValue(_, originalArg, rid) {
+            return unpack(originalArg, -1, rid);
         }
     };
 

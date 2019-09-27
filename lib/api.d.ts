@@ -14,6 +14,7 @@ export declare enum ApiProtocolArgTypeFlag {
     value = 1,
     callback = 2,
     proxy = 4,
+    buffer = 5,
     /**
      * to detect extensions, `extension` bit must be set
      * ps `1 << 16`
@@ -35,9 +36,17 @@ declare type ApiProtocolArg_Proxy = {
     type: ApiProtocolArgTypeFlag.proxy;
     objId: string | number;
 };
-export declare type ApiProtocolArg = ApiProtocolArg_None | ApiProtocolArg_Value | ApiProtocolArg_Callback | ApiProtocolArg_Proxy;
+declare type ApiProtocolArg_Buffer = {
+    type: ApiProtocolArgTypeFlag.buffer;
+    /** data in base64 */
+    data64: string;
+};
+export declare type ApiProtocolArg = ApiProtocolArg_None | ApiProtocolArg_Value | ApiProtocolArg_Callback | ApiProtocolArg_Proxy | ApiProtocolArg_Buffer;
+export declare type ApiProtocolReturnType = ApiProtocolArg;
+export declare type ApiProtocolValue = ApiProtocolArg;
 export declare type ApiProtocol = {
     method?: string;
+    /** [callback middleware]'s option */
     callback?: string;
     args: ApiProtocolArg[];
 };
@@ -49,7 +58,11 @@ export declare class Api<RemoteMethodMap extends DefaultMethodMap, SelfMethodMap
     });
     debugName: string;
     private handleRemoteCall;
-    private _call;
+    readonly _send: (params: {
+        method?: string | undefined;
+        callback?: string | undefined;
+        args: any[];
+    }) => Promise<any>;
     /** deprecated, use `call` instead */
     readonly callMethod: <Method extends keyof RemoteMethodMap>(method: Method, ...args: ArgsN<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
     readonly call: <Method extends keyof RemoteMethodMap>(method: Method, ...args: ArgsN<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
@@ -79,16 +92,13 @@ export declare type ApiMiddleware<ApiT extends Api<RemoteMethodMap, SelfMethodMa
     install?(api: ApiT, middleware: ApiMiddleware<ApiT, RemoteMethodMap, SelfMethodMap>): void;
     call?(params: {
         method?: string;
-        callback?: string;
         args: any[];
     }, originalParams: {
         method?: string;
-        callback?: string;
         args: any[];
     }, requestId: number): void;
     postCall?(params: {
         method?: string;
-        callback?: string;
         args: any[];
     }, requestId: number): void;
     /** preprocess data */
@@ -100,8 +110,8 @@ export declare type ApiMiddleware<ApiT extends Api<RemoteMethodMap, SelfMethodMa
     /** unpack arg on handle remote call */
     unpackArg?(unpackedArg: any | undefined, originalArg: ApiProtocolArg, argIndex: number, requestId: number): any;
     /** pack returning value after call handling */
-    packReturnValue?(packedReturnValue: PodJSON | undefined, originalReturnValue: any, requestId: number): PodJSON | undefined;
+    packReturnValue?(packedReturnValue: PodJSON | undefined, originalReturnValue: any, requestId: number): ApiProtocolReturnType | undefined;
     /** unpack returned value after call */
-    unpackReturnValue?(unpackedReturnValue: any | undefined, originalReturnValue: PodJSON, requestId: number): any;
+    unpackReturnValue?(unpackedReturnValue: any | undefined, originalReturnValue: ApiProtocolReturnType, requestId: number): any;
 };
 export {};

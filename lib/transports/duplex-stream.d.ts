@@ -12,5 +12,5 @@ export declare class DuplexStreamTransport implements ITransport {
     private requestHandler;
     readonly stream: IStreamDuplex<ITransportProtocol, ITransportProtocol>;
     config: Readonly<Config>;
-    pending: TicketList<ITransportProtocol>;
+    pending: TicketList<ITransportResponse>;
 }

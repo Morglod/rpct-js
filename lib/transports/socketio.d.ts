@@ -17,5 +17,5 @@ export declare class SocketIOTransport implements ITransport {
     readonly socket: SocketIOSocket;
     config: Readonly<Config>;
     eventName: string;
-    pending: TicketList<ITransportProtocol>;
+    pending: TicketList<ITransportResponse>;
 }

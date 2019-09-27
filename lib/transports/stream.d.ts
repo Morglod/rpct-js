@@ -13,5 +13,5 @@ export declare class StreamTransport implements ITransport {
     readonly wstream: IStreamWritable<ITransportProtocol>;
     private requestHandler;
     config: Readonly<Config>;
-    pending: TicketList<ITransportProtocol>;
+    pending: TicketList<ITransportResponse>;
 }

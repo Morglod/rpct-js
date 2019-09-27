@@ -1,7 +1,8 @@
 import { Config, DefaultConfig } from '../config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from '../transports/itransport';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse, transportProtocolToResponse, isTransportProtocolReturnable, isTransportProtocolApi } from '../transports/itransport';
 import { TicketList } from '../utils/ticket-list';
 import { IStreamDuplex } from '../streams/istream';
+import { ApiProtocolArgTypeFlag } from '../api';
 
 export class DuplexStreamTransport implements ITransport {
     constructor(
@@ -25,13 +26,21 @@ export class DuplexStreamTransport implements ITransport {
 
             if (this.pending.hasUUID(msg.uuid)) {
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: found pending`, msg.uuid);
-                this.pending.answer(msg.uuid, msg, 'no uuid check');
+                if (isTransportProtocolReturnable(msg)) {
+                    this.pending.answer(msg.uuid, msg, 'no uuid check');
+                } else {
+                    throw new Error(`StreamIOTransport_${debugName}: msg should be returnable`);
+                }
             } else {
                 if (this.config.debug) console.log(`StreamIOTransport_${debugName}: forEach requestHandler`);
-                const resp = await this.requestHandler(msg.data);
-                this.stream.write(Object.assign(resp, {
-                    uuid: msg.uuid,
-                }));
+                if (isTransportProtocolApi(msg)) {
+                    const resp = await this.requestHandler(msg.api);
+                    this.stream.write(Object.assign(resp, {
+                        uuid: msg.uuid
+                    }));
+                } else {
+                    throw new Error(`StreamIOTransport_${debugName}: chunkProtocol without .api`);
+                }
             }
         });
     }
@@ -41,7 +50,7 @@ export class DuplexStreamTransport implements ITransport {
         
         const req: ITransportProtocol = {
             uuid,
-            data,
+            api: data,
         };
 
         if (this.config.debug) console.log(`StreamIOTransport_${this.debugName}: making request`, data);
@@ -49,7 +58,6 @@ export class DuplexStreamTransport implements ITransport {
         const { answer } = this.pending.ask(req.uuid);
         this.stream.write(req);
         return answer.catch(err => ({
-            data: undefined,
             exception: `${err}`,
         }));
     }
@@ -71,5 +79,5 @@ export class DuplexStreamTransport implements ITransport {
     readonly stream: IStreamDuplex<ITransportProtocol, ITransportProtocol>;
     config: Readonly<Config> = DefaultConfig;
 
-    pending = new TicketList<ITransportProtocol>();
+    pending = new TicketList<ITransportResponse>();
 }

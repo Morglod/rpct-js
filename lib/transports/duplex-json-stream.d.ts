@@ -1,5 +1,5 @@
 import { Config } from '../config';
-import { ITransport, ITransportRequestHandler, ITransportData, ITransportProtocol, ITransportResponse } from '../transports/itransport';
+import { ITransport, ITransportRequestHandler, ITransportData, ITransportResponse } from '../transports/itransport';
 import { TicketList } from '../utils/ticket-list';
 import { IStreamDuplex } from '../streams/istream';
 export declare class DuplexJsonStreamTransport implements ITransport {
@@ -12,5 +12,5 @@ export declare class DuplexJsonStreamTransport implements ITransport {
     private requestHandler;
     readonly stream: IStreamDuplex;
     config: Readonly<Config>;
-    pending: TicketList<ITransportProtocol>;
+    pending: TicketList<ITransportResponse>;
 }

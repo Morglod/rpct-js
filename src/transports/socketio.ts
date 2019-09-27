@@ -1,8 +1,9 @@
 import 'socket.io-client';
 
 import { Config, DefaultConfig } from '../config';
-import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse } from '../transports/itransport';
+import { ITransport, ITransportRequestHandler, ITransportProtocol, ITransportData, ITransportResponse, isTransportProtocolReturnable, isTransportProtocolApi } from '../transports/itransport';
 import { TicketList } from '../utils/ticket-list';
+import { ApiProtocolArgTypeFlag } from '../api';
 
 export type SocketIOTransportProtocolHandler = (response: ITransportProtocol) => void;
 
@@ -21,13 +22,23 @@ export class SocketIOTransport implements ITransport {
 
             if (this.pending.hasUUID(response.uuid)) {
                 if (this.config.debug) console.log('SocketIOTransport: found pending', response.uuid);
-                this.pending.answer(response.uuid, response, 'no uuid check');
+                if (isTransportProtocolReturnable(response)) {
+                    this.pending.answer(response.uuid, response, 'no uuid check');
+                } else {
+                    throw new Error(`StreamIOTransport: msg should be returnable`);
+                }
             } else {
                 if (this.config.debug) console.log('SocketIOTransport: forEach requestHandler');
-                const resp = await this.requestHandler(response.data);
-                this.socket.emit(this.eventName, Object.assign(resp, {
-                    uuid: response.uuid,
-                }));
+
+                if (isTransportProtocolApi(response)) {
+                    const resp = await this.requestHandler(response.api);
+                    if (this.config.debug) console.log(`StreamIOTransport: requestHandler for uuid="${response.uuid}", answered data: "${JSON.stringify(resp)}"`);
+                    this.socket.emit(this.eventName, Object.assign(resp, {
+                        uuid: response.uuid,
+                    }));
+                } else {
+                    throw new Error(`StreamIOTransport: msg should has api`);
+                }
             }
         });
     }
@@ -37,13 +48,12 @@ export class SocketIOTransport implements ITransport {
         
         const req: ITransportProtocol = {
             uuid,
-            data,
+            api: data,
         };
 
         const { answer } = this.pending.ask(req.uuid);
         this.socket.emit(this.eventName, req);
         return answer.catch(err => ({
-            data: undefined,
             exception: `${err}`,
         }));
     }
@@ -67,5 +77,5 @@ export class SocketIOTransport implements ITransport {
     config: Readonly<Config> = DefaultConfig;
     eventName = '';
 
-    pending = new TicketList<ITransportProtocol>();
+    pending = new TicketList<ITransportResponse>();
 }

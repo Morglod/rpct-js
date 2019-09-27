@@ -1,4 +1,4 @@
-import { ApiMiddleware, Api, ApiProtocolArgTypeFlag } from "../api";
+import { ApiMiddleware, Api, ApiProtocolArgTypeFlag, ApiProtocolArg } from "../api";
 import { setObjectOptions, getObjectOptions } from "../utils/object-options";
 
 export const CALLBACK_OPTIONS_SYMBOL = Symbol('callback options');
@@ -46,6 +46,37 @@ export const callbacksMiddleware = () => {
         delete map[uuid];
     };
 
+    const pack = (arg: any, argI: number, rid: number) => {
+        if (typeof arg === 'function') {
+            const callbackUUID = `${api.nextUUID()}`;
+
+            if (!callBoundCallbacks[rid]) callBoundCallbacks[rid] = [];
+            callBoundCallbacks[rid].push(callbackUUID);
+
+            callbacks[callbackUUID] = arg;
+            if (api.config.debug) console.log(`Api_${api.debugName} call: found func arg at ${argI} index, bound a callback as callbackUUID="${callbackUUID}"`);
+            
+            return {
+                type: ApiProtocolArgTypeFlag.callback,
+                callback: callbackUUID,
+            } as const;
+        }
+        return undefined;
+    };
+
+    const unpack = (arg: ApiProtocolArg, argI: number, rid: number) => {
+        if (arg.type === ApiProtocolArgTypeFlag.callback) {
+            if (api.config.debug) console.log(`Api_${api.debugName} handleRemoteCall: callback at ${argI} arg index, returning proxy`);
+            return (...callbackArgs: any[]) => {
+                if (api.config.debug) console.log(`Api_${api.debugName} handleRemoteCall: proxy call for ${argI} arg index, callbackArgs="${JSON.stringify(callbackArgs)}", callback="${arg.callback}"`);
+                return api._send({
+                    callback: arg.callback,
+                    args: callbackArgs,
+                });
+            };
+        }
+    };
+
     const middleware: ApiMiddleware = {
         install(api_) {
             api = api_;
@@ -61,21 +92,19 @@ export const callbacksMiddleware = () => {
         },
     
         packArg(_, origArg, argI, rid) {
-            if (typeof origArg === 'function') {
-                const callbackUUID = `${api.nextUUID()}`;
-    
-                if (!callBoundCallbacks[rid]) callBoundCallbacks[rid] = [];
-                callBoundCallbacks[rid].push(callbackUUID);
-    
-                callbacks[callbackUUID] = origArg;
-                if (api.config.debug) console.log(`Api_${api.debugName} call: found func arg at ${argI} index, bound a callback as callbackUUID="${callbackUUID}"`);
-                
-                return {
-                    type: ApiProtocolArgTypeFlag.callback,
-                    callback: callbackUUID,
-                };
-            }
-            return undefined;
+            return pack(origArg, argI, rid);
+        },
+
+        unpackArg(_, orginArg, argI, rid) {
+            return unpack(orginArg, argI, rid);
+        },
+
+        packReturnValue(_, origReturnValue, rid) {
+            return pack(origReturnValue, -1, rid);
+        },
+
+        unpackReturnValue(_, origReturnValue, rid) {
+            return unpack(origReturnValue, -1, rid);
         },
     
         handleRemoteCallPickMethod(prevPicked, data, rid) {
