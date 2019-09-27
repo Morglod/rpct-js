@@ -17,3 +17,5 @@ export * from '../figma/utils';
 export * from '../figma/index';
 
 export * from '../middlewares/callbacks';
+
+export * from '../connectors/dom-window';

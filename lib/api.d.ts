@@ -38,6 +38,7 @@ declare type ApiProtocolArg_Proxy = {
 };
 declare type ApiProtocolArg_Buffer = {
     type: ApiProtocolArgTypeFlag.buffer;
+    bufferType: 'Buffer' | 'Uint8Array';
     /** data in base64 */
     data64: string;
 };

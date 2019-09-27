@@ -4,6 +4,8 @@
 
 RPC toolkit.
 
+Goal: make simpliest for usage, zero-effort remote control library.
+
 Api<Methods> -> Transport -> { ... session ... } -> Transport -> Api<Methods>
 
 Api operates with messages.  
@@ -87,6 +89,7 @@ as Transport may be implemented any environment, eg:
 * DOM Window
 * System sockets
 * Figma UI-plugin
+* WebSockets
 
 [check out examples](./src/examples)
 
@@ -137,27 +140,19 @@ Parent window script:
 ```js
 var frame = document.getElementById('target');
 
-var streamTransport = new RPCT.StreamTransport(
-    RPCT.createWindowReadStream(window).stream,
-    RPCT.createWindowWriteStream(frame.contentWindow),
-);
-var api = new RPCT.Api({}, streamTransport);
+var streamTransport = RPCT.connectToDOM(window, frame.contentWindow);
+var api = RPCT.proxyMapRemote(new RPCT.Api({}, streamTransport));
 
-api.call(
-    'sum',    // Remote api method
-    10,             // argument `a`
-    20,             // argument `b`
-    sumResult => console.log('sum:', sumResult),    // argument `sumCallback`
-    mulResult => console.log('mul:', mulResult)     // argument `mulCallback`
+api.sum(
+    10, 20, // a, b
+    sumResult => console.log('sum:', sumResult), // sumCallback
+    mulResult => console.log('mul:', mulResult), // mulCallback
 );
 ```
 
 Inner frame script:
 ```js
-var streamTransport = new RPCT.StreamTransport(
-    RPCT.createWindowReadStream(window).stream,
-    RPCT.createWindowWriteStream(window.parent),
-);
+var streamTransport = RPCT.connectToDOM(window, window.parent);
 
 var remoteApi = new RPCT.Api({
     // api methods here

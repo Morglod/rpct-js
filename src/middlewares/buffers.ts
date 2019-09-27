@@ -8,6 +8,15 @@ export const buffersMiddleware = () => {
             const buf = (arg as Buffer);
             return {
                 type: ApiProtocolArgTypeFlag.buffer,
+                bufferType: 'Buffer',
+                data64: buf.toString('base64'),
+            } as const;
+        }
+        if (arg instanceof Uint8Array) {
+            const buf = Buffer.from(arg as Uint8Array);
+            return {
+                type: ApiProtocolArgTypeFlag.buffer,
+                bufferType: 'Uint8Array',
                 data64: buf.toString('base64'),
             } as const;
         }
@@ -17,6 +26,9 @@ export const buffersMiddleware = () => {
     const unpack = (arg: ApiProtocolArg) => {
         if (arg.type === ApiProtocolArgTypeFlag.buffer) {
             const buf = Buffer.from(arg.data64, 'base64');
+            if (arg.bufferType === 'Uint8Array') {
+                return Uint8Array.from(buf);
+            }
             return buf;
         }
         return undefined;

@@ -11,9 +11,7 @@
                 mulCallback(a * b);
             }
 
-            var wstream = RPCT.createWindowWriteStream(window.parent);
-            var rstream = RPCT.createWindowReadStream(window).stream;
-            var streamTransport = new RPCT.StreamTransport(rstream, wstream, undefined, 'remote');
+            var streamTransport = RPCT.connectToDOM(window, window.parent);
             var remoteApi = new RPCT.Api({
                 remoteSum,
             }, streamTransport);
