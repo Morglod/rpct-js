@@ -101,21 +101,25 @@ export const proxyObjMiddleware = () => {
             });
         },
     
-        packArg(_, origArg, argI, rid) {
-            return pack(origArg, argI, rid);
-        },
-    
-        unpackArg(_, originalArg, argI, rid) {
-            return unpack(originalArg, argI, rid);
+        packArg(packed, origArg, argI, rid) {
+            const r = pack(origArg, argI, rid);
+            return r === undefined ? packed : r;
         },
 
-        packReturnValue(_, origArg, rid) {
-            return pack(origArg, -1, rid);
+        unpackArg(unpacked, orginArg, argI, rid) {
+            const r = unpack(orginArg, argI, rid);
+            return r === undefined ? unpacked : r;
         },
-    
-        unpackReturnValue(_, originalArg, rid) {
-            return unpack(originalArg, -1, rid);
-        }
+
+        packReturnValue(packed, origReturnValue, rid) {
+            const r = pack(origReturnValue, -1, rid);
+            return r === undefined ? packed : r;
+        },
+
+        unpackReturnValue(unpacked, origReturnValue, rid) {
+            const r = unpack(origReturnValue, -1, rid);
+            return r === undefined ? unpacked : r;
+        },
     };
 
     const x = {

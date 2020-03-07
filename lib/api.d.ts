@@ -111,7 +111,7 @@ export declare type ApiMiddleware<ApiT extends Api<RemoteMethodMap, SelfMethodMa
     /** unpack arg on handle remote call */
     unpackArg?(unpackedArg: any | undefined, originalArg: ApiProtocolArg, argIndex: number, requestId: number): any;
     /** pack returning value after call handling */
-    packReturnValue?(packedReturnValue: PodJSON | undefined, originalReturnValue: any, requestId: number): ApiProtocolReturnType | undefined;
+    packReturnValue?(packedReturnValue: ApiProtocolArg | undefined, originalReturnValue: any, requestId: number): ApiProtocolReturnType | undefined;
     /** unpack returned value after call */
     unpackReturnValue?(unpackedReturnValue: any | undefined, originalReturnValue: ApiProtocolReturnType, requestId: number): any;
 };
