@@ -6,6 +6,7 @@ export * from '../transports/duplex-json-stream';
 export * from '../transports/duplex-stream';
 // export * from '../transports/socketio';
 export * from '../transports/stream';
+export * from '../transports/webws';
 export * from '../transports/itransport';
 export * from '../utils/utils';
 export * from '../streams/dom-window';
