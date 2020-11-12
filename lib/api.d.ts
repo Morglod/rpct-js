@@ -1,6 +1,5 @@
 import { Config } from './config';
 import { ITransport } from './transports/itransport';
-import { ArgsN } from 'tsargs';
 import { UUIDGenerator } from './utils/utils';
 import { PodJSON, PromisifyFuncReturnType } from './utils/types';
 export declare type DefaultMethodMap = {
@@ -60,13 +59,13 @@ export declare class Api<RemoteMethodMap extends DefaultMethodMap, SelfMethodMap
     debugName: string;
     private handleRemoteCall;
     readonly _send: (params: {
-        method?: string | undefined;
-        callback?: string | undefined;
+        method?: string;
+        callback?: string;
         args: any[];
     }) => Promise<any>;
     /** deprecated, use `call` instead */
-    readonly callMethod: <Method extends keyof RemoteMethodMap>(method: Method, ...args: ArgsN<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
-    readonly call: <Method extends keyof RemoteMethodMap>(method: Method, ...args: ArgsN<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
+    readonly callMethod: <Method extends keyof RemoteMethodMap>(method: Method, ...args: Parameters<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
+    readonly call: <Method extends keyof RemoteMethodMap>(method: Method, ...args: Parameters<RemoteMethodMap[Method]>) => ReturnType<ApiDefinition<RemoteMethodMap>[Method]>;
     readonly methods: SelfMethodMap;
     readonly transport: ITransport;
     readonly config: Config;
@@ -84,7 +83,7 @@ export declare class Api<RemoteMethodMap extends DefaultMethodMap, SelfMethodMap
     private _hook_unpackArg;
     private _hook_packReturnValue;
     private _hook_unpackReturnValue;
-    readonly addMiddleware: (middleware: ApiMiddleware<Api<any, any>, any, any>) => Promise<void>;
+    readonly addMiddleware: (middleware: ApiMiddleware) => Promise<void>;
 }
 declare const MIDDLEWARE_HOOKS: readonly ["call", "postCall", "preHandleRemoteCall", "handleRemoteCallPickMethod", "postHandleRemoteCall", "packArg", "unpackArg", "packReturnValue", "unpackReturnValue"];
 declare type MIDDLEWARE_HOOK_NAME = typeof MIDDLEWARE_HOOKS[number];

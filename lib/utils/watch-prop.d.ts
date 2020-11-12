@@ -6,10 +6,10 @@ declare type WatcherEvents<T> = {
 export declare class Watcher<T> extends EventEmitter<WatcherEvents<T>> {
     constructor(propListenerDisposer?: () => void);
     private _propListenerDisposer?;
-    readonly propListenerDisposer: (() => void) | undefined;
+    get propListenerDisposer(): (() => void) | undefined;
     lastValue: T | undefined;
     readonly emitChange: (newValue: T) => void;
-    readonly setPropListenerDisposer: (disposer: (() => void) | undefined) => void;
+    readonly setPropListenerDisposer: (disposer: Watcher<T>["_propListenerDisposer"]) => void;
     /** unbind all listeners from this watcher and bind to other */
     readonly rebindTo: (otherWatcher: Watcher<T>) => void;
     /** unbind all listeners from this watcher and bind to other and disposeEmitter */

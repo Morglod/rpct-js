@@ -1,6 +1,5 @@
 import { Config, DefaultConfig } from './config';
 import { ITransport, ITransportRequestHandler } from './transports/itransport';
-import { ArgsN } from 'tsargs';
 import { UUIDGenerator, simpleCountGenerator } from './utils/utils';
 import { PodJSON, PromisifyFuncReturnType } from './utils/types';
 import { callbacksMiddleware } from './middlewares/callbacks';
@@ -228,12 +227,12 @@ export class Api<
     /** deprecated, use `call` instead */
     readonly callMethod = <Method extends keyof RemoteMethodMap>(
         method: Method,
-        ...args: ArgsN<RemoteMethodMap[Method]>
+        ...args: Parameters<RemoteMethodMap[Method]>
     ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._send({ method: method as any, args }) as any;
 
     readonly call = <Method extends keyof RemoteMethodMap>(
         method: Method,
-        ...args: ArgsN<RemoteMethodMap[Method]>
+        ...args: Parameters<RemoteMethodMap[Method]>
     ): ReturnType<ApiDefinition<RemoteMethodMap>[Method]> => this._send({ method: method as any, args }) as any;
 
     // TODO: call without middlewares mechanism, for speedup

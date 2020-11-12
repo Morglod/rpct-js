@@ -1,4 +1,5 @@
 import { ApiMiddleware, Api } from "../api";
+import { UUIDGenerator } from "../utils/utils";
 import { PlainUUID, PromisifyFuncReturnType } from "../utils/types";
 export declare type ProxyApiMethods = {
     $proxy_callField(objId: PlainUUID, path: string, args: any[]): any;
@@ -9,7 +10,7 @@ export declare type ProxyApiMethods = {
 };
 export declare const proxyObjMiddleware: () => {
     middleware: ApiMiddleware<Api<any, any>, any, any>;
-    uuidGenerator: () => string | number;
+    uuidGenerator: UUIDGenerator;
     api: Api<ProxyApiMethods, ProxyApiMethods>;
     boundObjects: {
         [objectId: string]: any;
